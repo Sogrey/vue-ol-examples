@@ -55,6 +55,31 @@ npm run build
 npm run preview
 ```
 
+## 🚀 部署
+
+### GitHub Pages 自动部署
+
+项目配置了 GitHub Actions 自动部署功能：
+
+- 当代码推送到 `main` 分支时，会自动触发构建和部署流程
+- 构建后的文件会自动部署到 GitHub Pages
+- 使用 Node.js 20 环境进行构建
+- 支持并发部署管理
+
+部署工作流文件位置：`.github/workflows/deploy.yml`
+
+### 手动部署
+
+如果需要手动部署到其他平台：
+
+```sh
+# 构建生产版本
+npm run build
+
+# 构建后的文件在 dist/ 目录
+# 可以将 dist/ 目录内容部署到任何静态文件服务器
+```
+
 ### 代码检查和修复
 
 ```sh
