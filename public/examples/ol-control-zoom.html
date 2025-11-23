@@ -12,7 +12,12 @@ CodeSandbox 分享文件
 <meta name="description" content="导航控件主要用于控制地图的平移、缩放。" />
 <template>
   <div id="map"></div>
-  <div class="mouse-div" id="mouse-div"></div>
+  <div class="ToolLib">
+    <input type="button" class="control-btn" id="zoom-out" value="单击缩小" />
+    <input type="button" class="control-btn" id="zoom-in" value="单击放大" />
+    <input type="button" class="control-btn" id="panto" value="平移到" />
+    <input type="button" class="control-btn" id="restore" value="复位" />
+  </div>
 </template>
 <script>
 console.log(ol)
@@ -42,49 +47,66 @@ const gaodeLayer = new ol.layer.Tile({
 })
 map.addLayer(gaodeLayer)
 
+// 地图视图初始参数
+const view = map.getView()
+const zoom = view.getZoom()
+const center = view.getCenter()
+const rotation = view.getRotation()
+// 缩小按钮
+document.getElementById("zoom-out").onclick = function() {
+  const view = map.getView() // 获取地图视图
+  const zoom = view.getZoom()
+  view.setZoom(zoom - 1)
+}
 
-// 创建鼠标控件
-const mousePositionControl = new ol.control.MousePosition({
-  // 坐标格式
-  coordinateFormat: ol.coordinate.createStringXY(4),
-  // 地图投影坐标系（若未设置，则输出默认投影坐标系的坐标）
-  projection: "EPSG:4326",
-  // 坐标信息容器CSS类名，默认为ol-mouse-position
-  className: 'mouse-position',
-  // 显示鼠标信息的目标容器
-  target: document.getElementById('mouse-div'),
-  // 未定义坐标的标记
-  undefinedHTML: '&nbsp'
-})
-
-map.addControl(mousePositionControl)
+//放大按钮
+document.getElementById("zoom-in").onclick = function() {
+  const view = map.getView()
+  const zoom = view.getZoom()
+  view.setZoom(zoom + 1)
+}
+// 平移功能
+document.getElementById("panto").onclick = function() {
+  const view = map.getView()
+  const wh = ol.proj.fromLonLat([105, 35])
+  view.setCenter(wh)
+  view.setZoom(5)
+}
+// 复位功能
+document.getElementById("restore").onclick = function() {
+  const view = map.getView()
+  view.setCenter(center)
+  view.setRotation = rotation
+  view.setZoom = zoom
+}
 </script>
 <style>
-   * {
-     padding: 0;
-     margin: 0;
-     font-size: 14px;
-     font-family: '微软雅黑';
-   }
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
 
-   #map {
-     position: absolute;
-     width: 100%;
-     height: 100%;
-   }
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
 
-   #mouse-div {
-     position: absolute;
-     top: 16px;
-     right: 16px;
-     width: 200px;
-     height: 40px;
-     line-height: 40px;
-     background: #060505ba;
-     text-align: center;
-     color: #fff;
-     border-radius: 5px;
-   }
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+.ToolLib {
+  position: absolute;
+  top: 24px;
+  right: 16px;
+}
 </style>
 
 <!-- Settings Section - 设置数据，将被自动解析 -->
