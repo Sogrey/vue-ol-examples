@@ -1,0 +1,149 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/23 17:23:12
+页面标题: OpenLayers 鹰眼控件
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 鹰眼控件</title>
+<meta name="description" content="鹰眼叫做地图的鸟瞰图或者缩略图。在地图中，通过鹰眼可以知道地图当前的位置范围。在鹰眼中，可以移动或者拖动到目标位置。鹰眼显示范围大，内容相对粗略。OpenLayers鹰眼控件默认显示在地图左下角，可以通过修改CSS样式进行调整。" />
+<template>
+<div id="map"></div>
+<div class="custome-overviewmap" id="custome-overviewmap"></div>
+</template>
+<script>
+console.log(ol)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+
+const baiduLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    url: "http://online{s}.map.bdimg.com/onlinelabel/?qt=tile&x={x}&y={y}&z={z}&styles=pl&udt=20141103&scaler=1",
+    crossOrigin: "anonymous",
+  }),
+});
+
+// 创建鹰眼控件
+const overviewMapControl = new ol.control.OverviewMap({
+  // 鹰眼控件自定义CSS类名
+  // className: "ol-overviewmap ol-custome-overviewmap",
+  // 加载鹰眼图层，坐标系需要保持一致,若不设置鹰眼图层，将用所有主地图图层取代
+  layers: [
+    baiduLayer,
+    // new ol.layer.Tile({
+    //   name: "天地图矢量图层",
+    //   source: new ol.source.XYZ({
+    //     url: 'http://t0.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=替换为自己的token',
+    //     wrapX: false
+    //   })
+    // }),
+    // new ol.layer.Tile({
+    //   name: "天地图矢量注记图层",
+    //   source: new ol.source.XYZ({
+    //     url: 'http://t0.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=替换为自己的token',
+    //     wrapX: false
+    //   })
+    // })
+  ],
+  // 控件展开标识
+  collapseLabel: '\u00BB',
+  // 控件折叠标识
+  label: '\u00AB',
+  // 设置控件展开
+  collapsed: false,
+  // 若想让鹰眼控件显示在地图HTML(viewport)外面，则提供target元素
+  target: document.getElementById('custome-overviewmap'),
+  // 收缩按钮提示文字
+  tipLabel: "收缩按钮",
+  // 自定义鹰眼控件视图，若不提供，则默认使用“EPSG:3857”投影坐标系
+  // view:''
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+
+    // 加载鹰眼控件
+    // overviewMapControl
+  ]),
+})
+// 后加载比例尺控件
+map.addControl(overviewMapControl)
+map.addLayer(gaodeLayer)
+
+// =============================
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-overviewmap {
+  position: absolute;
+  height: 160px;
+  width: 170px;
+  right: 0px;
+  top: 16px;
+}
+
+.ol-overviewmap {
+  left: 0;
+  bottom: 0;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>

@@ -1,0 +1,227 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/23 17:59:09
+页面标题: OpenLayers  动画控件
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers  动画控件</title>
+<meta name="description" content="动画控件可用于增强地图的动感效果，带给用户轻松的交互体验，适当的动画效果有利于增加地图体验。本节在原有地图方法上实现旋转定位、弹性定位、反弹定位、自旋转定位、飞行定位等效果。" />
+<template>
+<div id="map"></div>
+<div class="animate-div">
+  <button class="animate-btn" id="rotate-to">旋转定位到武汉</button>
+  <button class="animate-btn" id="flex-to">弹性定位到北京</button>
+  <button class="animate-btn" id="bounce-to">反弹定位到广州</button>
+  <button class="animate-btn" id="rotate">围绕西安旋转</button>
+  <button class="animate-btn" id="fly-to">飞行定位到杭州</button>
+</div>
+</template>
+<script>
+console.log(ol)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+
+const map = new ol.Map({
+  target: 'map',
+  // 在加载瓦片图层时开启动画效果
+  loadTilesWhileAnimate: true,
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 8,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+  ]),
+})
+map.addLayer(gaodeLayer)
+
+// =============================
+
+// 定位点坐标
+const wuhan = ol.proj.fromLonLat([114.302387, 30.591255])
+const beijing = ol.proj.fromLonLat([116.400739, 39.913359])
+const guangzhou = ol.proj.fromLonLat([113.261081, 23.151553])
+const xian = ol.proj.fromLonLat([108.951639, 34.351322])
+const hangzhou = ol.proj.fromLonLat([120.205736, 30.253831])
+// 获取反弹值
+function bounce(t) {
+  const s = 7.5625
+  const p = 2.75
+  let l = null
+  if (t < l / p) {
+    l = s * t * t
+  } else {
+    if (t < 2 / p) {
+      t -= 1.5 / p
+      l = s * t * t + 0.75
+    } else {
+      if (t < 2.5 / p) {
+        t -= 2.25 / p
+        l = s * t * t + 0.9375
+      } else {
+        t -= 2.625 / p
+        l = s * t * t + 0.984375
+      }
+    }
+  }
+  return l
+}
+// 获取弹性伸缩值
+function elastic(t) {
+  return Math.pow(2, -10 * t) * Math.sin(t - 0.075) * (2 * Math.PI) + 1
+}
+const view = map.getView()
+// 旋转定位
+document.getElementById('rotate-to').onclick = function() {
+  const center = view.getCenter()
+  view.animate({
+    // 第一个过程
+    // 动画结束时的视图中心，即当前视图中心与目标视图中心连线的中心点
+    center: [
+      center[0] + (wuhan[0] - center[0]) / 2,
+      center[1] + (wuhan[1] - center[1]) / 2
+    ],
+    rotation: Math.PI, // 动画结束时的旋转角度，即180度
+    easing: ol.easing.easeIn // 控制动画速度，开始缓慢之后逐渐加快
+  }, {
+    // 第二个过程
+    center: wuhan, // 动画结束时的视图中心
+    rotation: 2 * Math.PI, // 动画结束时的旋转角度，即360度
+    easing: ol.easing.easeIn // 控制动画速度，开始缓慢之后逐渐加快
+  })
+}
+
+//弹性伸缩效果定位
+document.getElementById('flex-to').onclick = function() {
+  view.animate({
+    center: beijing,
+    duration: 2000, //动画持续时间，单位为毫秒（ms）
+    easing: elastic // 控自动画持续时间函数
+  })
+}
+// 反弹效果定位
+document.getElementById('bounce-to').onclick = () => {
+  view.animate({
+    center: guangzhou,
+    duration: 2000,
+    easing: bounce // 控制动画持续时间函数
+  })
+}
+// 自旋效果定位
+document.getElementById('rotate').onclick = () => {
+  const rotation = view.getRotation()
+  view.animate({
+    // 第一个过程
+    rotation: rotation + Math.PI, // 第一次动画旋转角度
+    anchor: xian, // 自旋中心点
+    easing: ol.easing.easeIn // 控自动画持续时间函数
+  }, {
+    // 第二个过程
+    rotation: rotation + 2 * Math.PI, // 第二次动画旋转角度
+    anchor: xian, // 自旋中心点
+    easing: ol.easing.easeOut // 控自动画持续时间函数
+  })
+}
+// 飞行效果定位
+document.getElementById('fly-to').onclick = () => {
+  const duration = 2000 //动画持续时间，单位为毫秒（ms）
+  const zoom = view.getZoom()
+  let parts = 2
+  let called = false
+  // 动画完成的回调函数
+  function callback(complete) {
+    --parts
+    if (called) {
+      return
+    }
+    if (parts === 0 || !complete) {
+      called = true
+    }
+
+  }
+  // 第一个动画
+  view.animate({
+    center: hangzhou,
+    duration: duration,
+  }, callback)
+  // 第二个动画
+  view.animate({
+    zoom: zoom - 1,
+    duration: duration / 2,
+  }, {
+    zoom: zoom,
+    duration: duration / 2
+  }, callback)
+}
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+.animate-div {
+  position: absolute;
+  top: 24px;
+  right: 16px;
+}
+
+.animate-btn {
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 16px;
+  color: #fff;
+  background: #000000a1;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>

@@ -1,15 +1,15 @@
 <!--
 CodeSandbox 分享文件
 生成时间: 2025/11/23 12:25:21
-页面标题: OpenLayers 加载鼠标位置控件
+页面标题: OpenLayers 导航控件
 原始页面链接: https://sogrey.top/CodeSandbox/
 -->
 
 <!-- CodeSandbox Template File -->
 <!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
 <engine-type>openlayers</engine-type>
-<title>OpenLayers 加载鼠标位置控件</title>
-<meta name="description" content="鼠标位置控件（MousePosition）用于显示当前地图容器中鼠标焦点处空间坐标值，方便用户确认导航或者漫游位置。OpenLayers鼠标位置控件默认显示在地图右上角，可以通过自定义样式进行调整。" />
+<title>OpenLayers 导航控件</title>
+<meta name="description" content="导航控件主要用于控制地图的平移、缩放。" />
 <template>
   <div id="map"></div>
   <div class="mouse-div" id="mouse-div"></div>
@@ -77,8 +77,7 @@ map.addControl(mousePositionControl)
      position: absolute;
      top: 16px;
      right: 16px;
-     min-width: 200px;
-     padding: 3px 10px;
+     width: 200px;
      height: 40px;
      line-height: 40px;
      background: #060505ba;

@@ -65,6 +65,12 @@ npm run preview
 - **主应用**：`https://sogrey.github.io/vue-ol-examples/`
 - **绘制几何图形示例**：`https://sogrey.github.io/vue-ol-examples/examples/draw-geometric-shapes.html`
 - **鼠标位置控件示例**：`https://sogrey.github.io/vue-ol-examples/examples/mousePositionControl.html`
+- **全屏控件示例**：`https://sogrey.github.io/vue-ol-examples/examples/ol-control-FullScreen.html`
+- **鹰眼控件示例**：`https://sogrey.github.io/vue-ol-examples/examples/ol-control-OverviewMap.html`
+- **比例尺控件示例**：`https://sogrey.github.io/vue-ol-examples/examples/ol-control-ScaleLine.html`
+- **测量控件示例**：`https://sogrey.github.io/vue-ol-examples/examples/ol-control-measure.html`
+- **导航控件示例**：`https://sogrey.github.io/vue-ol-examples/examples/ol-control-zoom.html`
+- **视图动画示例**：`https://sogrey.github.io/vue-ol-examples/examples/ol-view-Animate.html`
 
 ### 本地访问
 在开发模式下，您可以：
@@ -73,6 +79,12 @@ npm run preview
 - 访问示例：
   - `http://localhost:5173/examples/draw-geometric-shapes.html`
   - `http://localhost:5173/examples/mousePositionControl.html`
+  - `http://localhost:5173/examples/ol-control-FullScreen.html`
+  - `http://localhost:5173/examples/ol-control-OverviewMap.html`
+  - `http://localhost:5173/examples/ol-control-ScaleLine.html`
+  - `http://localhost:5173/examples/ol-control-measure.html`
+  - `http://localhost:5173/examples/ol-control-zoom.html`
+  - `http://localhost:5173/examples/ol-view-Animate.html`
 
 ## 🚀 部署
 
@@ -156,7 +168,13 @@ public/
 ├── favicon.ico         # 网站图标
 ├── examples/           # 可直接访问的示例文件
 │   ├── draw-geometric-shapes.html  # 绘制几何图形示例
-│   └── mousePositionControl.html   # 鼠标位置控件示例
+│   ├── mousePositionControl.html    # 鼠标位置控件示例
+│   ├── ol-control-FullScreen.html  # 全屏控件示例
+│   ├── ol-control-OverviewMap.html  # 鹰眼控件示例
+│   ├── ol-control-ScaleLine.html   # 比例尺控件示例
+│   ├── ol-control-measure.html     # 测量控件示例
+│   ├── ol-control-zoom.html        # 导航控件示例
+│   └── ol-view-Animate.html       # 视图动画示例
 └── ...
 ```
 
@@ -199,6 +217,88 @@ OpenLayers 鼠标位置控件示例，展示如何：
 - 自定义控件容器和样式
 - 优雅的UI设计和用户体验
 - 独立的HTML文件，无需构建环境即可运行
+
+## 🎛️ OpenLayers 控件示例
+
+### ol-control-FullScreen (public/examples/ol-control-FullScreen.html)
+OpenLayers 全屏显示控件示例，展示如何：
+- 将地图内容放大到全屏显示，扩大视野范围
+- 自定义控件位置和样式
+- 支持全屏状态切换
+- **可直接访问**：部署后可通过 `/examples/ol-control-FullScreen.html` 直接访问
+
+#### 功能特点：
+- 一键全屏切换
+- 自定义CSS样式
+- 兼容现代浏览器的全屏API
+- 优化的用户体验设计
+
+### ol-control-OverviewMap (public/examples/ol-control-OverviewMap.html)
+OpenLayers 鹰眼控件示例，展示如何：
+- 显示地图的鸟瞰图或缩略图
+- 在鹰眼中查看当前位置范围
+- 通过鹰眼快速导航到目标位置
+- **可直接访问**：部署后可通过 `/examples/ol-control-OverviewMap.html` 直接访问
+
+#### 功能特点：
+- 实时显示主视图范围
+- 支持拖动导航
+- 可自定义显示样式
+- 帮助用户理解地图整体位置关系
+
+### ol-control-ScaleLine (public/examples/ol-control-ScaleLine.html)
+OpenLayers 比例尺控件示例，展示如何：
+- 显示图上距离与实际距离的比例
+- 实时反映地图缩放级别的比例变化
+- 自定义比例尺样式和单位
+- **可直接访问**：部署后可通过 `/examples/ol-control-ScaleLine.html` 直接访问
+
+#### 功能特点：
+- 动态比例尺显示
+- 支持公制和英制单位
+- 可自定义CSS样式
+- 响应地图缩放变化
+
+### ol-control-measure (public/examples/ol-control-measure.html)
+OpenLayers 测量控件示例，展示如何：
+- 测量地图上的距离和面积
+- 支持长度和面积两种测量模式
+- 支持测地线测量选项
+- **可直接访问**：部署后可通过 `/examples/ol-control-measure.html` 直接访问
+
+#### 功能特点：
+- 支持长度和面积测量
+- 可选择测地线测量
+- 交互式测量工具
+- 实时显示测量结果
+
+### ol-control-zoom (public/examples/ol-control-zoom.html)
+OpenLayers 导航控件示例，展示如何：
+- 控制地图的平移和缩放
+- 提供缩放按钮和滑块控制
+- 自定义导航控件样式
+- **可直接访问**：部署后可通过 `/examples/ol-control-zoom.html` 直接访问
+
+#### 功能特点：
+- 支持缩放按钮和滑块
+- 自定义控件布局
+- 优雅的交互设计
+- 响应式控制体验
+
+## 🎬 视图动画示例
+
+### ol-view-Animate (public/examples/ol-view-Animate.html)
+OpenLayers 视图动画示例，展示如何：
+- 实现旋转定位、弹性定位、反弹定位
+- 实现飞行定位等动画效果
+- 增强地图的动感效果和交互体验
+- **可直接访问**：部署后可通过 `/examples/ol-view-Animate.html` 直接访问
+
+#### 功能特点：
+- 多种动画效果展示
+- 平滑的视图转换
+- 可配置的动画参数
+- 提升用户交互体验
 
 更多示例持续更新中...
 

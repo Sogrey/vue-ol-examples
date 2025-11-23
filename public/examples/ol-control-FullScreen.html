@@ -1,0 +1,126 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/23 17:41:18
+页面标题: OpenLayers  全屏显示控件
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers  全屏显示控件</title>
+<meta name="description" content="全屏显示控件用于将地图内容放大到全屏显示，扩大视野范围。OpenLayers全屏显示控件默认显示在地图右上角，可以通过修改CSS样式进行调整。" />
+<template>
+<div id="map"></div>
+<div class="full-screen-div" id="full-screen-div"></div>
+</template>
+<script>
+console.log(ol)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+
+const baiduLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    url: "http://online{s}.map.bdimg.com/onlinelabel/?qt=tile&x={x}&y={y}&z={z}&styles=pl&udt=20141103&scaler=1",
+    crossOrigin: "anonymous",
+  }),
+});
+
+// 创建全屏控件
+const fullScreenControl = new ol.control.FullScreen({
+  // 全屏控件自定义CSS类名
+  //className: "ol-custome-full-screen",
+  // 按钮标识
+  label: '\u2922',
+  // 全屏按钮激活标识
+  labelActive: '\u00d7',
+  // 全屏按钮提示文本
+  tipLabel: "全屏按钮",
+  // 是否开启完全键盘访问
+  keys: true,
+  // 若想让全屏控件显示在地图HTML(viewport)外面，则提供target元素
+  // target: document.getElementById('full-screen-div'),
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+
+    // 加载全屏显示控件控件
+    // fullScreenControl
+    // new ol.control.FullScreen()
+  ]),
+})
+// 加载全屏显示控件控件
+map.addControl(fullScreenControl)
+map.addLayer(gaodeLayer)
+
+// =============================
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#full-screen-div {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  top: 70px;
+  left: 10px;
+  background: #ccc
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
