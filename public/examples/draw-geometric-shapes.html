@@ -11,123 +11,123 @@ CodeSandbox 分享文件
 <title>OpenLayers 绘制几何图形 示例</title>
 <meta name="description" content="这是一个简单 OpenLayers 绘制几何图形 示例" />
 <template>
-<div id="map" title="地图显示"></div>
-<div class="draw-div">
-  <label for="">绘制几何图形：&nbsp;</label>
-  <select name="" id="draw-type">
-    <option value="None">无</option>
-    <option value="Point">点</option>
-    <option value="LineString">线</option>
-    <option value="Polygon">面</option>
-    <option value="Circle">圆</option>
-    <option value="Square">正方形</option>
-    <option value="Box">矩形</option>
-  </select>
-</div>
+  <div id="map" title="地图显示"></div>
+  <div class="draw-div">
+    <label for="">绘制几何图形：&nbsp;</label>
+    <select name="" id="draw-type">
+      <option value="None">无</option>
+      <option value="Point">点</option>
+      <option value="LineString">线</option>
+      <option value="Polygon">面</option>
+      <option value="Circle">圆</option>
+      <option value="Square">正方形</option>
+      <option value="Box">矩形</option>
+    </select>
+  </div>
 </template>
 <script>
-console.log(ol)
-const map = new ol.Map({
-  target: "map",
-  loadTilesWhileInteracting: true,
-  view: new ol.View({
-    center: [11421771, 4288300],
-    zoom: 5,
-    worldsWrap: true,
-    minZoom: 1,
-    maxZoom: 20,
-    projection: 'EPSG:3857'
-  }),
-  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
-  controls: ol.control.defaults.defaults().extend([
-    // 加载鼠标控件
-    new ol.control.MousePosition()
-  ])
-})
-
-const gaodeLayer = new ol.layer.Tile({
-  source: new ol.source.XYZ({
-    title: "高德",
-    url: "http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}"
+  console.log(ol)
+  const map = new ol.Map({
+    target: 'map',
+    loadTilesWhileInteracting: true,
+    view: new ol.View({
+      center: [11421771, 4288300],
+      zoom: 5,
+      worldsWrap: true,
+      minZoom: 1,
+      maxZoom: 20,
+      projection: 'EPSG:3857',
+    }),
+    // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+    controls: ol.control.defaults.defaults().extend([
+      // 加载鼠标控件
+      new ol.control.MousePosition(),
+    ]),
   })
-})
-map.addLayer(gaodeLayer)
 
-let draw = null
-let drawType = document.querySelector("#draw-type")
+  const gaodeLayer = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      title: '高德',
+      url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+    }),
+  })
+  map.addLayer(gaodeLayer)
 
-const source = new ol.source.Vector({
-  wrapX: false
-})
-const vectorLayer = new ol.layer.Vector({
-  source: source,
-  style: new ol.style.Style({
-    fill: new ol.style.Fill({
-      color: "#9b65ff30"
-    }),
-    stroke: new ol.style.Stroke({
-      color: "yellow",
-      width: 2.5,
-    }),
-    image: new ol.style.Circle({
+  let draw = null
+  let drawType = document.querySelector('#draw-type')
+
+  const source = new ol.source.Vector({
+    wrapX: false,
+  })
+  const vectorLayer = new ol.layer.Vector({
+    source: source,
+    style: new ol.style.Style({
       fill: new ol.style.Fill({
-        color: "blue"
+        color: '#9b65ff30',
       }),
-      radius: 2.5,
       stroke: new ol.style.Stroke({
-        color: "blue",
-        width: 1.5,
+        color: 'yellow',
+        width: 2.5,
       }),
+      image: new ol.style.Circle({
+        fill: new ol.style.Fill({
+          color: 'blue',
+        }),
+        radius: 2.5,
+        stroke: new ol.style.Stroke({
+          color: 'blue',
+          width: 1.5,
+        }),
+      }),
+    }),
+  })
+  map.addLayer(vectorLayer)
+
+  // 获取地图容器元素
+  const mapContainer = map.getTargetElement()
+
+  // 监听绘制更改事件
+  drawType.onchange = (evt) => {
+    if (draw) {
+      clearInteraction()
+    }
+    addInteraction(drawType.value)
+  }
+
+  // 添加交互绘制
+  function addInteraction(value) {
+    if (value === 'None') {
+      clearInteraction()
+      return
+    }
+    mapContainer.style.cursor = 'crosshair'
+    let geometryFunction = null
+    switch (value) {
+      case 'Square':
+        // 方形
+        value = 'LineString'
+        geometryFunction = ol.interaction.Draw.createRegularPolygon(4)
+        break
+      case 'Box':
+        // 矩形
+        value = 'LineString'
+        geometryFunction = ol.interaction.Draw.createBox()
+    }
+    draw = new ol.interaction.Draw({
+      source: vectorLayer.getSource(),
+      type: value,
+      geometryFunction: geometryFunction,
     })
-  })
-})
-map.addLayer(vectorLayer)
-
-// 获取地图容器元素
-const mapContainer = map.getTargetElement()
-
-// 监听绘制更改事件
-drawType.onchange = (evt) => {
-  if (draw) {
-    clearInteraction()
+    map.addInteraction(draw)
   }
-  addInteraction(drawType.value)
-}
-
-// 添加交互绘制
-function addInteraction(value) {
-  if (value === "None") {
-    clearInteraction()
-    return
+  // 清除交互对象
+  function clearInteraction() {
+    mapContainer.style.cursor = 'pointer'
+    map.removeInteraction(draw)
+    draw = null
+    // 清除绘制对象
+    // source.clear()
   }
-  mapContainer.style.cursor = "crosshair"
-  let geometryFunction = null
-  switch (value) {
-    case "Square":
-      // 方形
-      value = "LineString"
-      geometryFunction = ol.interaction.Draw.createRegularPolygon(4)
-      break
-    case "Box":
-      // 矩形
-      value = "LineString"
-      geometryFunction = ol.interaction.Draw.createBox()
-  }
-  draw = new ol.interaction.Draw({
-    source: vectorLayer.getSource(),
-    type: value,
-    geometryFunction: geometryFunction
-  })
-  map.addInteraction(draw)
-}
-// 清除交互对象
-function clearInteraction() {
-  mapContainer.style.cursor = 'pointer'
-  map.removeInteraction(draw)
-  draw = null
-  // 清除绘制对象
-  // source.clear()
-}
 </script>
 <style>
   * {
@@ -147,6 +147,14 @@ function clearInteraction() {
     position: absolute;
     width: 100%;
     height: 100%;
+  }
+
+  .ol-zoom {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    top: auto;
+    left: auto;
   }
 
   .ol-mouse-position {
@@ -176,7 +184,7 @@ function clearInteraction() {
   .load-div:hover {
     cursor: pointer;
     /* font-size: 16px; */
-    transition: font-size .2s;
+    transition: font-size 0.2s;
     fill-opacity: 0.8;
     filter: brightness(1);
     color: #fff;
@@ -185,13 +193,7 @@ function clearInteraction() {
 
 <!-- Settings Section - 设置数据，将被自动解析 -->
 <settings>
-<head-metadata>
-
-</head-metadata>
-<css-links>
-
-</css-links>
-<js-links>
-
-</js-links>
+  <head-metadata> </head-metadata>
+  <css-links> </css-links>
+  <js-links> </js-links>
 </settings>
