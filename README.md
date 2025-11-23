@@ -64,12 +64,15 @@ npm run preview
 
 - **主应用**：`https://sogrey.github.io/vue-ol-examples/`
 - **绘制几何图形示例**：`https://sogrey.github.io/vue-ol-examples/examples/draw-geometric-shapes.html`
+- **鼠标位置控件示例**：`https://sogrey.github.io/vue-ol-examples/examples/mousePositionControl.html`
 
 ### 本地访问
 在开发模式下，您可以：
 - 启动开发服务器：`npm run dev`
 - 访问主应用：`http://localhost:5173`
-- 访问示例：`http://localhost:5173/examples/draw-geometric-shapes.html`
+- 访问示例：
+  - `http://localhost:5173/examples/draw-geometric-shapes.html`
+  - `http://localhost:5173/examples/mousePositionControl.html`
 
 ## 🚀 部署
 
@@ -152,7 +155,8 @@ src/
 public/
 ├── favicon.ico         # 网站图标
 ├── examples/           # 可直接访问的示例文件
-│   └── draw-geometric-shapes.html  # 绘制几何图形示例
+│   ├── draw-geometric-shapes.html  # 绘制几何图形示例
+│   └── mousePositionControl.html   # 鼠标位置控件示例
 └── ...
 ```
 
@@ -179,6 +183,21 @@ OpenLayers 绘制几何图形示例，包含功能：
 - 支持规则图形的几何函数
 - 响应式UI设计
 - 优雅的样式和用户体验
+- 独立的HTML文件，无需构建环境即可运行
+
+### mousePositionControl (public/examples/mousePositionControl.html)
+OpenLayers 鼠标位置控件示例，展示如何：
+- 显示当前地图容器中鼠标焦点处的空间坐标值
+- 方便用户确认导航或者漫游位置
+- 自定义坐标格式和投影坐标系
+- 自定义控件位置和样式
+- **可直接访问**：部署后可通过 `/examples/mousePositionControl.html` 直接访问
+
+#### 功能特点：
+- 支持多种坐标格式显示（可自定义精度）
+- 支持不同投影坐标系转换（EPSG:4326等）
+- 自定义控件容器和样式
+- 优雅的UI设计和用户体验
 - 独立的HTML文件，无需构建环境即可运行
 
 更多示例持续更新中...

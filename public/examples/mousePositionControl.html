@@ -1,0 +1,101 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/23 12:25:21
+页面标题: OpenLayers 加载鼠标位置控件
+原始页面链接: http://localhost:5173/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载鼠标位置控件</title>
+<meta name="description" content="鼠标位置控件用于显示当前地图容器中鼠标焦点处空间坐标值，方便用户确认导航或者漫游位置。OpenLayers鼠标位置控件默认显示在地图右上角，可以通过自定义样式进行调整。" />
+<template>
+  <div id="map" title="地图显示"></div>
+  <div class="mouse-div" id="mouse-div"></div>
+</template>
+<script>
+console.log(ol)
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    // new ol.control.MousePosition(),
+  ]),
+})
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+map.addLayer(gaodeLayer)
+
+
+// 创建鼠标控件
+const mousePositionControl = new ol.control.MousePosition({
+  // 坐标格式
+  coordinateFormat: ol.coordinate.createStringXY(4),
+  // 地图投影坐标系（若未设置，则输出默认投影坐标系的坐标）
+  projection: "EPSG:4326",
+  // 坐标信息容器CSS类名，默认为ol-mouse-position
+  className: 'mouse-position',
+  // 显示鼠标信息的目标容器
+  target: document.getElementById('mouse-div'),
+  // 未定义坐标的标记
+  undefinedHTML: '&nbsp'
+})
+
+map.addControl(mousePositionControl)
+</script>
+<style>
+   * {
+     padding: 0;
+     margin: 0;
+     font-size: 14px;
+     font-family: '微软雅黑';
+   }
+
+   #map {
+     position: absolute;
+     width: 100%;
+     height: 100%;
+   }
+
+   #mouse-div {
+     position: absolute;
+     top: 16px;
+     right: 16px;
+     width: 200px;
+     height: 40px;
+     line-height: 40px;
+     background: #060505ba;
+     text-align: center;
+     color: #fff;
+     border-radius: 5px;
+   }
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
