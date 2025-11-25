@@ -17,6 +17,10 @@ CodeSandbox 分享文件
 //地图投影坐标系
 const projection = ol.proj.get('EPSG:3857');
 
+// const center = transform([112.926305, 28.204233], "EPSG:4326", "baidu") // 坐标
+// const center = [112.926305, 28.204233] // 4326
+const center = [112.93816837836393, 28.206985612845706] // bd:09
+
 const map = new ol.Map({
   target: "map",
   loadTilesWhileInteracting: true,
@@ -28,44 +32,58 @@ const map = new ol.Map({
     maxZoom: 20,
     projection: projection
   }),
+  projection: "BD:09",
+  center,
+  zoom: 8,
   // 鼠标控件：鼠标在地图上移动时显示坐标信息。
   controls: ol.control.defaults.defaults().extend([
     // 加载鼠标控件
     new ol.control.MousePosition()
   ])
 })
-
-const resolutions = []
-for (let i = 0; i < 19; i++) {
-  resolutions[i] = Math.pow(2, 18 - i)
-}
-const tileGrid = new ol.tilegrid.TileGrid({
-  origin: [0, 0],
-  resolutions: resolutions
-})
-// 百度地图数据源
-const baiduSource = new ol.source.TileImage({
-  projection: projection,
-  tileGrid: tileGrid,
-  tileUrlFunction: function(tileCoord, pixelRatio, proj) {
-    if (!tileCoord) {
-      return ""
-    }
-    const z = tileCoord[0]
-    let x = tileCoord[1]
-    let y = tileCoord[2]
-    if (x < 0) {
-      x = "M" + (-x)
-    }
-    if (y < 0) {
-      y = "M" + (-y)
-    }
-    return "http://online3.map.bdimg.com/onlinelabel/?qt=tile&x=" + x + "&y=" + y + "&z=" + z + "&styles=pl&udt=20151021&scaler=1&p=1";
-  }
-})
+console.log(ol)
 const baiduLayer = new ol.layer.Tile({
-  source: baiduSource
+  source: new ol.source.TileImage({
+    projection: "baidu",
+    // tilePixelRatio: 2,
+    tileGrid: new ol.tilegrid.TileGrid({
+      origin: [0, 0],
+      resolutions: Array.from({
+        length: 19
+      }).map((_, i) =>
+        Math.pow(2, 18 - i)
+      ),
+    }),
+    tileUrlFunction(tileCoord) {
+      if (!tileCoord) return ""
+
+      let z = tileCoord[0]
+      let x = tileCoord[1]
+      let y = -tileCoord[2] - 1
+
+      if (x < 0) x = "M" + -x
+
+      if (y < 0) y = "M" + -y
+
+      /* 本地离线地图 */
+      // return `/baidu_tiles/${z}/${x}/${y}.png`
+
+      /* 在线地图 */
+      // return (
+      //   "http://online3.map.bdimg.com/onlinelabel/?qt=tile&x=" +
+      //   x +
+      //   "&y=" +
+      //   y +
+      //   "&z=" +
+      //   z +
+      //   "&styles=pl&udt=20151021&scaler=1&p=1"
+      // )
+
+      return `https://maponline2.bdimg.com/tile/?qt=vtile&x=${x}&y=${y}&z=${z}&styles=pl&scaler=1&udt=20240805&from=jsapi2_0`
+    },
+  }),
 })
+
 map.addLayer(baiduLayer)
 </script>
 <style>
