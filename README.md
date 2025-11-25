@@ -72,6 +72,7 @@ npm run preview
 - **测量控件示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-control-measure.html)
 - **导航控件示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-control-zoom.html)
 - **视图动画示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-view-Animate.html)
+- **GeoJSON数据加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-GeoJSON.html)
 
 ### 本地访问
 
@@ -169,7 +170,8 @@ public/
 │   ├── ol-control-ScaleLine.html   # 比例尺控件示例
 │   ├── ol-control-measure.html     # 测量控件示例
 │   ├── ol-control-zoom.html        # 导航控件示例
-│   └── ol-view-Animate.html       # 视图动画示例
+│   ├── ol-view-Animate.html       # 视图动画示例
+│   └── ol-load-GeoJSON.html       # GeoJSON数据加载示例
 └── ...
 ```
 
@@ -320,6 +322,28 @@ OpenLayers 视图动画示例，展示如何：
 - 平滑的视图转换
 - 可配置的动画参数
 - 提升用户交互体验
+
+## 📊 数据加载示例
+
+### ol-load-GeoJSON (public/examples/ol-load-GeoJSON.html)
+
+OpenLayers 加载GeoJSON数据示例，展示如何：
+
+- 通过VectorSource类创建矢量数据源
+- 通过VectorLayer创建矢量图层并添加到地图
+- 为不同几何类型设置自定义样式（点、线、面、圆等）
+- 动态加载和移除矢量图层
+- 使用高德地图作为底图
+- **可直接访问**：部署后可通过 https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-GeoJSON.html 直接访问
+
+#### 功能特点：
+
+- 支持多种几何类型的样式渲染
+- 动态图层管理（添加/移除）
+- 丰富的样式配置（边框、填充、颜色等）
+- 响应式UI设计
+- 支持外部GeoJSON文件加载
+- 独立的HTML文件，无需构建环境即可运行
 
 更多示例持续更新中...
 

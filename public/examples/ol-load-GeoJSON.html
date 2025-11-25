@@ -1,0 +1,250 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/26 00:04:30
+页面标题: OpenLayers 加载GeoJSON数据
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载GeoJSON数据</title>
+<meta name="description" content="GeoJSON数据，顾名思义就是具有地理空间属性的JSON数据，组织结构与JSON相同，都是采用键值对的方式组织数据。
+通过VectorSource类创建矢量数据源，然后通过VectorLayer创建矢量图层，并将其添加到地图中。" />
+<template>
+<div id="map"></div>
+<div class="load-div" onclick="loadGeoJSON()">
+  <span>加载GeoJSON</span>
+</div>
+</template>
+<script>
+var gaodeMapLayer = new ol.layer.Tile({
+  title: '高德地图',
+  source: new ol.source.XYZ({
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+    wrapX: false,
+  }),
+})
+
+var map = new ol.Map({
+  layers: [gaodeMapLayer],
+  view: new ol.View({
+    center: ol.proj.transform([103.23, 35.33], 'EPSG:4326', 'EPSG:3857'), //地图初始中心点
+    projection: 'EPSG:3857',
+    zoom: 4,
+    minZoom: 1,
+  }),
+  target: 'map',
+})
+
+// -----------------
+
+/**
+ *矢量几何要素的样式
+ */
+var image = new ol.style.Circle({
+  radius: 5,
+  fill: null,
+  stroke: new ol.style.Stroke({
+    color: 'red',
+    width: 1
+  })
+});
+var styles = {
+  'Point': [
+    new ol.style.Style({
+      //点样式
+      image: image
+    })
+  ],
+  'LineString': [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        //线的边界样式
+        color: 'green',
+        width: 1
+      })
+    })
+  ],
+  'MultiLineString': [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        //多线的边界样式
+        color: 'green',
+        width: 1
+      })
+    })
+  ],
+  'MultiPoint': [
+    new ol.style.Style({
+      //多点的点样式
+      image: image
+    })
+  ],
+  'MultiPolygon': [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        //多区的边界样式
+        color: 'yellow',
+        width: 1
+      }),
+      fill: new ol.style.Fill({
+        //多区的填充样式
+        color: 'rgba(255, 255, 0, 0.1)'
+      })
+    })
+  ],
+  'Polygon': [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        //区的边界样式
+        color: 'blue',
+        lineDash: [4],
+        width: 3
+      }),
+      fill: new ol.style.Fill({
+        //区的填充样式
+        color: 'rgba(0, 0, 255, 0.1)'
+      })
+    })
+  ],
+  'GeometryCollection': [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        //集合要素的边界样式
+        color: 'magenta',
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        //集合要素的填充样式
+        color: 'magenta'
+      }),
+      image: new ol.style.Circle({
+        //集合要素的点样式
+        radius: 10,
+        fill: null,
+        stroke: new ol.style.Stroke({
+          color: 'magenta'
+        })
+      })
+    })
+  ],
+  'Circle': [
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        //圆的边界样式
+        color: 'red',
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        //圆的填充样式
+        color: 'rgba(255,0,0,0.2)'
+      })
+    })
+  ]
+};
+
+var styleFunction = function(feature, resolution) {
+  //根据要素类型设置几何要素的样式
+  return styles[feature.getGeometry().getType()];
+};
+
+let vectorLayer = null
+
+function loadGeoJSON() {
+  // 移除已有图层
+  if (vectorLayer != null || vectorLayer != 'undefined') {
+    map.removeLayer(vectorLayer)
+  }
+  const vectorSource = new ol.source.Vector({
+    url: "../../datas/中华人民共和国.geojson",
+    format: new ol.format.GeoJSON()
+  })
+  const extent1 = vectorSource.getExtent()
+  vectorLayer = new ol.layer.Vector({
+    source: vectorSource,
+    // 设置样式
+    style: styleFunction
+  })
+
+  map.addLayer(vectorLayer)
+  var view = map.getView();
+  // 移动到矢量图层
+  view.setCenter([12536865.056410152, 3635008.742201894]);
+}
+</script>
+<style>
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+.ol-mouse-position {
+  padding: 5px;
+  top: 10px;
+  height: 40px;
+  line-height: 40px;
+  background: #060505ba;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.load-div {
+  position: absolute;
+  right: 16px;
+  top: 50px;
+  width: 100px;
+  background-color: #060505ba;
+  text-align: center;
+  padding: 5px 10px;
+  color: #ddd;
+  border-radius: 2.5px;
+  filter: brightness(0.95);
+}
+
+.load-div:hover {
+  cursor: pointer;
+  /* font-size: 16px; */
+  transition: font-size .2s;
+  fill-opacity: 0.8;
+  filter: brightness(1);
+  color: #fff;
+}
+
+.load-btn {
+  border: none;
+  background: none;
+
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
