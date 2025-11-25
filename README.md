@@ -73,6 +73,8 @@ npm run preview
 - **导航控件示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-control-zoom.html)
 - **视图动画示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-view-Animate.html)
 - **GeoJSON数据加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-GeoJSON.html)
+- **高德地图加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-GaodeMap.html)
+- **百度地图加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-BaiduMap.html)
 
 ### 本地访问
 
@@ -171,7 +173,9 @@ public/
 │   ├── ol-control-measure.html     # 测量控件示例
 │   ├── ol-control-zoom.html        # 导航控件示例
 │   ├── ol-view-Animate.html       # 视图动画示例
-│   └── ol-load-GeoJSON.html       # GeoJSON数据加载示例
+│   ├── ol-load-GeoJSON.html       # GeoJSON数据加载示例
+│   ├── ol-load-GaodeMap.html      # 高德地图加载示例
+│   └── ol-load-BaiduMap.html      # 百度地图加载示例
 └── ...
 ```
 
@@ -344,6 +348,44 @@ OpenLayers 加载GeoJSON数据示例，展示如何：
 - 响应式UI设计
 - 支持外部GeoJSON文件加载
 - 独立的HTML文件，无需构建环境即可运行
+
+## 🗺️ 地图加载示例
+
+### ol-load-GaodeMap (public/examples/ol-load-GaodeMap.html)
+
+OpenLayers 加载高德地图示例，展示如何：
+
+- 使用XYZ数据源方式加载高德地图瓦片
+- 配置地图投影坐标系和视图参数
+- 添加鼠标位置控件显示坐标信息
+- 设置合适的缩放级别和地图范围
+- **可直接访问**：部署后可通过 https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-GaodeMap.html 直接访问
+
+#### 功能特点：
+
+- 使用标准XYZ瓦片服务接口
+- 支持中文地图标注
+- 配置了合适的瓦片URL参数
+- 包含鼠标位置实时显示
+- 优化的地图缓存策略
+
+### ol-load-BaiduMap (public/examples/ol-load-BaiduMap.html)
+
+OpenLayers 加载百度地图示例，展示如何：
+
+- 根据百度地图瓦片请求格式拓展数据源
+- 自定义百度地图的瓦片网格系统
+- 处理百度地图特有的坐标系统
+- 实现百度地图瓦片URL的动态生成
+- **可直接访问**：部署后可通过 https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-BaiduMap.html 直接访问
+
+#### 技术特点：
+
+- 自定义TileGrid瓦片网格
+- 实现百度地图特有的瓦片坐标系转换
+- 支持负坐标处理（M前缀）
+- 配置19级详细分辨率
+- 完整的鼠标位置集成
 
 更多示例持续更新中...
 

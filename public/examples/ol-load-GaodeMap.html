@@ -1,0 +1,84 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/26 00:34:30
+页面标题: OpenLayers 加载高德地图
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载高德地图</title>
+<meta name="description" content="高德地图数据直接按照XYZ数据源方式加载即可。" />
+<template>
+<div id="map"></div>
+</template>
+<script>
+ //地图投影坐标系
+ const projection = ol.proj.get('EPSG:3857');
+
+ const map = new ol.Map({
+   target: "map",
+   loadTilesWhileInteracting: true,
+   view: new ol.View({
+     center: [11421771, 4288300],
+     zoom: 5,
+     worldsWrap: true,
+     minZoom: 1,
+     maxZoom: 20,
+     projection: projection
+   }),
+   // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+   controls: ol.control.defaults.defaults().extend([
+     // 加载鼠标控件
+     new ol.control.MousePosition()
+   ])
+ })
+
+ //-----------------
+
+ const gaodeLayer = new ol.layer.Tile({
+   source: new ol.source.XYZ({
+     title: "高德地图",
+     url: "http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}"
+   })
+ })
+
+ map.addLayer(gaodeLayer)
+</script>
+<style>
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>

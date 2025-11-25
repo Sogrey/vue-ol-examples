@@ -5,8 +5,8 @@
 ### 地图与数据加载
 
 - [OpenLayers 从后端服务加载 GeoJSON 数据](https://zhuanlan.zhihu.com/p/1914775329354024698)
-- [OpenLayers 加载 GeoJSON 的四种方式](https://zhuanlan.zhihu.com/p/1891248504304812188)
-- [OpenLayers 加载GeoJSON数据](https://zhuanlan.zhihu.com/p/1910403289712924105)
+- ~~[OpenLayers 加载 GeoJSON 的四种方式](https://zhuanlan.zhihu.com/p/1891248504304812188)~~
+- ~~[OpenLayers 加载GeoJSON数据](https://zhuanlan.zhihu.com/p/1910403289712924105)~~
 - [OpenLayers 加载GeoTIFF影像](https://zhuanlan.zhihu.com/p/1919109143547054068)
 - [OpenLayers 加载内存格式GeoTIFF影像](https://zhuanlan.zhihu.com/p/1919108108380271596)
 - [OpenLayers 加载动态数据](https://zhuanlan.zhihu.com/p/1922407521399842511)

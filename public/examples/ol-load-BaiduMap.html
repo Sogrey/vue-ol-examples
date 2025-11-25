@@ -1,0 +1,106 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/26 00:48:02
+页面标题: OpenLayers 加载百度地图
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载百度地图</title>
+<meta name="description" content="可以参照瓦片地图的方法来加载百度地图，在OpenLayer 5地图库中没有加载百度地图数据源的方法，所以需要根据百度地图瓦片请求格式拓展数据源来加载。" />
+<template>
+<div id="map"></div>
+</template>
+<script>
+//地图投影坐标系
+const projection = ol.proj.get('EPSG:3857');
+
+const map = new ol.Map({
+  target: "map",
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: projection
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition()
+  ])
+})
+
+const resolutions = []
+for (let i = 0; i < 19; i++) {
+  resolutions[i] = Math.pow(2, 18 - i)
+}
+const tileGrid = new ol.tilegrid.TileGrid({
+  origin: [0, 0],
+  resolutions: resolutions
+})
+// 百度地图数据源
+const baiduSource = new ol.source.TileImage({
+  projection: projection,
+  tileGrid: tileGrid,
+  tileUrlFunction: function(tileCoord, pixelRatio, proj) {
+    if (!tileCoord) {
+      return ""
+    }
+    const z = tileCoord[0]
+    let x = tileCoord[1]
+    let y = tileCoord[2]
+    if (x < 0) {
+      x = "M" + (-x)
+    }
+    if (y < 0) {
+      y = "M" + (-y)
+    }
+    return "http://online3.map.bdimg.com/onlinelabel/?qt=tile&x=" + x + "&y=" + y + "&z=" + z + "&styles=pl&udt=20151021&scaler=1&p=1";
+  }
+})
+const baiduLayer = new ol.layer.Tile({
+  source: baiduSource
+})
+map.addLayer(baiduLayer)
+</script>
+<style>
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
