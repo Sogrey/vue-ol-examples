@@ -1,0 +1,81 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/26 22:36:58
+页面标题: OpenLayers 加载显示天地图
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载显示天地图</title>
+<meta name="description" content="加载显示天地图示例。tk 替换为自己的 key。本站不会采集用户任何数据。" />
+<template>
+<div id="map"></div>
+</template>
+<script>
+const map = new ol.Map({
+  target: "map",
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [0, 0],
+    // center: [11444274, 12707441],
+    zoom: 3
+  })
+})
+const tdtLayer = new ol.layer.Tile({
+  title: "天地图矢量图层",
+  source: new ol.source.XYZ({
+    url: "http://t0.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=替换为你自己的token",
+    crossOrigin: "anoymous",
+    wrapX: false
+  })
+})
+const tdtzjLayer = new ol.layer.Tile({
+  title: "天地图注记图层",
+  source: new ol.source.XYZ({
+    url: "http://t0.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=替换为你自己的token",
+    attibutions: "天地图注记描述",
+    crossOrigin: "anoymous",
+    wrapX: false
+  })
+})
+map.addLayer(tdtLayer)
+map.addLayer(tdtzjLayer)
+</script>
+<style>
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>

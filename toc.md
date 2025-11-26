@@ -10,17 +10,17 @@
 - [OpenLayers 加载GeoTIFF影像](https://zhuanlan.zhihu.com/p/1919109143547054068)
 - [OpenLayers 加载内存格式GeoTIFF影像](https://zhuanlan.zhihu.com/p/1919108108380271596)
 - [OpenLayers 加载动态数据](https://zhuanlan.zhihu.com/p/1922407521399842511)
-- [OpenLayers 加载高德地图](https://zhuanlan.zhihu.com/p/22534809483)
-- [OpenLayers 加载百度地图](https://zhuanlan.zhihu.com/p/1910407077697914246)
-- [OpenLayers 加载天地图](https://zhuanlan.zhihu.com/p/18707787126)
+- ~~[OpenLayers 加载高德地图](https://zhuanlan.zhihu.com/p/22534809483)~~
+- ~~[OpenLayers 加载百度地图](https://zhuanlan.zhihu.com/p/1910407077697914246)~~
+- ~~[OpenLayers 加载天地图](https://zhuanlan.zhihu.com/p/18707787126)~~
 - [OpenLayers 加载GPX数据](https://zhuanlan.zhihu.com/p/1921645707456119259)
 - [OpenLayers 加载KML数据](https://zhuanlan.zhihu.com/p/1921645707456119259)
 - [OpenLayers 加载ArcGIS瓦片数据](https://zhuanlan.zhihu.com/p/1910401502306087880)
 - [OpenLayers 加载Geoserver WMTS服务](https://zhuanlan.zhihu.com/p/1916237209545208531)
 - [OpenLayers 下载地图切片](https://zhuanlan.zhihu.com/p/1922388016518893571)
 - [OpenLayers 切片预加载](https://zhuanlan.zhihu.com/p/1922416388900881977)
-- [OpenLayers 加载网格信息](https://zhuanlan.zhihu.com/p/1911154320776340610)
-- [OpenLayers 加载格网和经纬网](https://zhuanlan.zhihu.com/p/1916582651541852534)
+- ~~[OpenLayers 加载网格信息](https://zhuanlan.zhihu.com/p/1911154320776340610)~~
+- ~~[OpenLayers 加载格网和经纬网](https://zhuanlan.zhihu.com/p/1916582651541852534)~~
 
 ### 文件操作
 

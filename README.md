@@ -75,6 +75,9 @@ npm run preview
 - **GeoJSON数据加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-GeoJSON.html)
 - **高德地图加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-GaodeMap.html)
 - **百度地图加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-BaiduMap.html)
+- **天地图加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-tdt.html)
+- **格网和经纬网示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-TileGrid.html)
+- **格网显示示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-TileGrid2.html)
 
 ### 本地访问
 
@@ -175,7 +178,10 @@ public/
 │   ├── ol-view-Animate.html       # 视图动画示例
 │   ├── ol-load-GeoJSON.html       # GeoJSON数据加载示例
 │   ├── ol-load-GaodeMap.html      # 高德地图加载示例
-│   └── ol-load-BaiduMap.html      # 百度地图加载示例
+│   ├── ol-load-BaiduMap.html      # 百度地图加载示例
+│   ├── ol-load-tdt.html           # 天地图加载示例
+│   ├── ol-load-TileGrid.html      # 格网和经纬网示例
+│   └── ol-load-TileGrid2.html     # 格网显示示例
 └── ...
 ```
 
@@ -388,6 +394,59 @@ OpenLayers 加载百度地图示例，展示如何：
 - 使用最新的百度在线地图API URL（20240805版本）
 - 完整的鼠标位置集成，支持多种坐标系统
 - 提供本地离线地图切换选项（注释代码）
+
+### ol-load-tdt (public/examples/ol-load-tdt.html)
+
+OpenLayers 加载天地图示例，展示如何：
+
+- 使用XYZ数据源加载天地图矢量图层
+- 配置天地图特有的URL参数和token认证
+- 设置跨域访问权限支持天地图服务
+- 自定义地图视图和中心点位置
+- **可直接访问**：部署后可通过 https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-tdt.html 直接访问
+
+#### 技术特点：
+
+- 支持天地图标准API接口
+- 需要配置个人token进行认证
+- 跨域资源共享(CORS)配置
+- 支持多种天地图图层类型切换
+
+## 📐 网格系统示例
+
+### ol-load-TileGrid (public/examples/ol-load-TileGrid.html)
+
+OpenLayers 加载格网和经纬网示例，展示如何：
+
+- 动态添加和移除格网图层显示切片信息
+- 实现经纬网叠加显示地理坐标
+- 创建交互式按钮控制网格显示
+- 格网信息包含切片级数、行列号
+- **可直接访问**：部署后可通过 https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-TileGrid.html 直接访问
+
+#### 功能特点：
+
+- 支持格网和经纬网两种模式切换
+- 实时显示切片级数、行列号信息
+- 交互式按钮控制，用户体验友好
+- 对大数据量切片地图调试非常有用
+
+### ol-load-TileGrid2 (public/examples/ol-load-TileGrid2.html)
+
+OpenLayers 加载格网示例，展示如何：
+
+- 创建基础格网系统显示切片位置
+- 使用高德地图作为底图叠加格网信息
+- 配置合适的格网样式和标签显示
+- 用于地图切片调试和位置标识
+- **可直接访问**：部署后可通过 https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-TileGrid2.html 直接访问
+
+#### 技术特点：
+
+- 专注于切片格网显示功能
+- 清晰的网格线标识
+- 支持不同缩放级别的格网自适应
+- 简洁的代码结构，易于理解和扩展
 
 更多示例持续更新中...
 

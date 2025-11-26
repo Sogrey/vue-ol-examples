@@ -1,0 +1,186 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2025/11/26 23:01:49
+页面标题: OpenLayers 加载格网和经纬网
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载格网和经纬网</title>
+<meta name="description" content="网格信息用于显示切片级数、行列号，在加载大数据量切片地图时非常有用，可以用于标识切片位置。经纬网在地图制图中经常出现，通过经度和纬度标识地理范围。" />
+<template>
+<div id="map"></div>
+
+<div id="top-content">
+  <button class="grid-btn grid-line">添加格网</button>
+  <button class="grid-btn lnglat-line">添加经纬网</button>
+</div>
+</template>
+<script>
+var gaodeMapLayer = new ol.layer.Tile({
+  title: '高德地图',
+  source: new ol.source.XYZ({
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+    wrapX: false,
+  }),
+})
+
+var map = new ol.Map({
+  target: 'map',
+  layers: [gaodeMapLayer],
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [104.0635986160487, 30.660919181071225],
+    // center: [11444274, 12707441],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: "EPSG:4326"
+  }),
+
+  // 地图默认控件
+  controls: ol.control.defaults.defaults({
+    zoom: true,
+    attribution: true,
+    rotate: true
+  })
+})
+
+map.on('click', evt => {
+  console.log(evt.coordinate)
+})
+
+const TileSource = new ol.source.TileDebug({
+  projection: map.getView().getProjection(),
+  // tileGrid: new ol.tilegrid.TileGrid({
+
+  // }),
+  wrapX: false,
+  template: '(x,y,z)({x},{y},{z})' // 显示结构
+})
+const gridLayer = new ol.layer.Tile({
+  source: TileSource
+})
+
+const graticule = new ol.layer.Graticule({
+  maxLines: 200, // 设置最大线条数量
+  strokeStyle: new ol.style.Stroke({
+    lineDash: [5], // 设置虚线间隔
+    width: 1.5, // 设置线段宽度
+    color: 'rgba(255,204,102, 0.85)' // 设置线段颜色
+  }),
+  showLabels: true,
+  wrapX: false,
+})
+
+/**
+ * 添加格网
+ */
+document.querySelector('.grid-line').addEventListener('click', evt => {
+  toogleAciveClass(evt.target)
+  removeLayer()
+  map.addLayer(gridLayer)
+})
+
+/**
+ * 添加经纬网
+ */
+document.querySelector('.lnglat-line').addEventListener('click', evt => {
+  toogleAciveClass(evt.target)
+  removeLayer()
+  map.addLayer(graticule)
+})
+/**
+ * 移除图层
+ */
+function removeLayer() {
+  map.removeLayer(gridLayer)
+  map.removeLayer(graticule)
+}
+/**
+ * 切换激活样式
+ */
+function toogleAciveClass(target) {
+  // 判断top-content子元素是否激活，并切换激活样式
+  const swipeBtnLike = document.querySelector('#top-content')
+  for (let element of swipeBtnLike.children) {
+    if (target === element) {
+      target.classList.add('active')
+    } else {
+      element.classList.remove('active')
+    }
+  }
+}
+</script>
+<style>
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#top-content {
+  position: absolute;
+  top: 24px;
+  right: 16px;
+  height: 50px;
+  line-height: 50px;
+  color: #fff;
+  text-align: center;
+}
+
+.grid-btn {
+  border-radius: 5px;
+  border: 1px solid #50505040;
+  padding: 5px 20px;
+  color: #fff;
+  margin: 0 10px;
+  background: #377d466e;
+  transition: background-color 10s ease-in-out 10s;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.grid-btn:hover {
+  cursor: pointer;
+  filter: brightness(120%);
+  background: linear-gradient(135deg, #c850c0, #4158d0);
+}
+
+.active {
+  background: linear-gradient(135deg, #c850c0, #4158d0);
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
