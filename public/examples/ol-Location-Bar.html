@@ -9,180 +9,183 @@ CodeSandbox 分享文件
 <!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
 <engine-type>openlayers</engine-type>
 <title>OpenLayers Location Bar</title>
-<meta
-  name="description"
-  content="这是一个简单 Location Bar 示例, 包含实时监听： 缩放级别、分辨率、经纬度、方向和比例尺。"
-/>
+<meta name="description" content="这是一个简单 Location Bar 示例, 包含实时监听： 缩放级别、分辨率、经纬度、方向和比例尺。" />
 <template>
-  <div id="map"></div>
-  <div class="footer">
-    <div><label for="">缩放级别：</label><span class="zoomValue"></span></div>
-    <div><label for="">分辨率：</label><span class="resolutionValue"></span></div>
-    <div><label for="">经度：</label><span class="lngValue"></span></div>
-    <div><label for="">纬度：</label><span class="latValue"></span></div>
-    <div><label for="">方向：</label><span class="headerValue"></span></div>
-    <div class="custome-scale-line" id="custome-scale-line"></div>
-  </div>
+<div id="map"></div>
+<div class="footer">
+  <div><label for="">缩放级别：</label><span class="zoomValue"></span> </div>
+  <div><label for="">分辨率：</label><span class="resolutionValue"></span></div>
+  <div><label for="">经度：</label><span class="lngValue"></span></div>
+  <div><label for="">纬度：</label><span class="latValue"></span></div>
+  <div><label for="">方向：</label><span class="headerValue"></span></div>
+  <div class="custome-scale-line" id="custome-scale-line"></div>
+</div>
 </template>
 <script>
-  console.log(ol)
+console.log(ol)
 
-  var gaodeMapLayer = new ol.layer.Tile({
-    title: '高德地图',
-    source: new ol.source.XYZ({
-      url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
-      wrapX: true,
-    }),
+var gaodeMapLayer = new ol.layer.Tile({
+  title: '高德地图',
+  source: new ol.source.XYZ({
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+    wrapX: true,
+  }),
+})
+
+const view = new ol.View({
+  center: ol.proj.transform([103.23, 35.33], 'EPSG:4326', 'EPSG:3857'), //地图初始中心点
+  projection: 'EPSG:3857',
+  zoom: 4,
+  minZoom: 1,
+})
+
+var map = new ol.Map({
+  layers: [gaodeMapLayer],
+  view,
+  target: 'map',
+})
+
+// 创建比例尺控件
+const scaleLineControl = new ol.control.ScaleLine({
+  units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
+  className: 'custome-scale-line', // 自定义css类样式名
+  // minWidth: 200,// 最小宽度
+  target: document.querySelector("#custome-scale-line"), // 放置比例尺控件的目标容器
+})
+// 后加载比例尺控件
+map.addControl(scaleLineControl)
+
+//======================
+
+// 经纬度
+const lngEle = document.querySelector(".lngValue")
+const latEle = document.querySelector(".latValue")
+const headerEle = document.querySelector(".headerValue")
+map.on('pointermove', evt => {
+  const coords = evt.coordinate
+  lngEle.textContent = coords[0].toFixed(6)
+  latEle.textContent = coords[1].toFixed(6)
+
+  // 转经纬度
+  const lonlat = ol.proj.toLonLat(coords)
+
+  lngEle.textContent = lonlat[0].toFixed(6)
+  latEle.textContent = lonlat[1].toFixed(6)
+
+  let angle = ((view.getRotation() * 180) / Math.PI).toFixed(0)
+  headerEle.textContent = `${angle}°`
+})
+
+//======================
+
+// 缩放级别
+const zoomEle = document.querySelector(".zoomValue")
+const resolutionEle = document.querySelector(".resolutionValue")
+
+zoomEle.textContent = parseInt(view.getZoom())
+resolutionEle.textContent = view.getResolution()
+
+// map.on('postrender', evt => {
+//   const view = map.getView()
+//   zoomEle.textContent = parseInt(view.getZoom())
+//   resolutionEle.textContent = view.getResolution()
+// })
+
+// 或
+
+// 获取视图的分辨率事件
+map.getView().on('change:resolution', function() {
+  zoomEle.textContent = parseInt(this.getZoom())
+  resolutionEle.textContent = this.getResolution();
+})
+
+//==========================
+
+//注册地图移动后触发得事件
+map.on('moveend', function(event) {
+  //获取可视化区域得范围
+  const size = map.getView().calculateExtent(map.getSize());
+  // 获取地图视图的分辨率
+  const resolution = map.getView().getResolution();
+
+  console.log({
+    size,
+    resolution
   })
+})
 
-  const view = new ol.View({
-    center: ol.proj.transform([103.23, 35.33], 'EPSG:4326', 'EPSG:3857'), //地图初始中心点
-    projection: 'EPSG:3857',
-    zoom: 4,
-    minZoom: 1,
-  })
-
-  var map = new ol.Map({
-    layers: [gaodeMapLayer],
-    view,
-    target: 'map',
-  })
-
-  // 创建比例尺控件
-  const scaleLineControl = new ol.control.ScaleLine({
-    units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
-    className: 'custome-scale-line', // 自定义css类样式名
-    // minWidth: 200,// 最小宽度
-    target: document.querySelector('#custome-scale-line'), // 放置比例尺控件的目标容器
-  })
-  // 后加载比例尺控件
-  map.addControl(scaleLineControl)
-
-  //======================
-
-  // 经纬度
-  const lngEle = document.querySelector('.lngValue')
-  const latEle = document.querySelector('.latValue')
-  const headerEle = document.querySelector('.headerValue')
-  map.on('pointermove', (evt) => {
-    const coords = evt.coordinate
-    lngEle.textContent = coords[0].toFixed(6)
-    latEle.textContent = coords[1].toFixed(6)
-
-    // 转经纬度
-    const lonlat = ol.proj.toLonLat(coords)
-
-    lngEle.textContent = lonlat[0].toFixed(6)
-    latEle.textContent = lonlat[1].toFixed(6)
-
-    let angle = ((view.getRotation() * 180) / Math.PI).toFixed(0)
-    headerEle.textContent = `${angle}°`
-  })
-
-  //======================
-
-  // 缩放级别
-  const zoomEle = document.querySelector('.zoomValue')
-  const resolutionEle = document.querySelector('.resolutionValue')
-
-  zoomEle.textContent = parseInt(view.getZoom())
-  resolutionEle.textContent = view.getResolution()
-
-  // map.on('postrender', evt => {
-  //   const view = map.getView()
-  //   zoomEle.textContent = parseInt(view.getZoom())
-  //   resolutionEle.textContent = view.getResolution()
-  // })
-
-  // 或
-
-  // 获取视图的分辨率事件
-  map.getView().on('change:resolution', function () {
-    zoomEle.textContent = parseInt(this.getZoom())
-    resolutionEle.textContent = this.getResolution()
-  })
-
-  //==========================
-
-  //注册地图移动后触发得事件
-  map.on('moveend', function (event) {
-    //获取可视化区域得范围
-    const size = map.getView().calculateExtent(map.getSize())
-    // 获取地图视图的分辨率
-    const resolution = map.getView().getResolution()
-
-    console.log({
-      size,
-      resolution,
-    })
-  })
-
-  // 分辨率级别变化监听
-  // map.getView().on('change:resolution', (event) => {
-  //   //方法
-  //   console.log(event)
-  // });
+// 分辨率级别变化监听
+// map.getView().on('change:resolution', (event) => {
+//   //方法
+//   console.log(event)
+// });
 </script>
 <style>
-  html,
-  body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-  }
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
 
-  #map {
-    width: 100%;
-    height: 100%;
-  }
+#map {
+  width: 100%;
+  height: 100%;
+}
 
-  .ol-zoom {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-    top: auto;
-    left: auto;
-  }
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
 
-  .footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 24px;
-    background: #3336;
-    display: flex;
-    justify-content: space-evenly;
-    justify-items: center;
-    color: #fff;
-    gap: 16px;
-    align-items: center;
-  }
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 24px;
+  background: #3336;
+  display: flex;
+  justify-content: space-evenly;
+  justify-items: center;
+  color: #fff;
+  gap: 16px;
+  align-items: center;
+}
 
-  #custome-scale-line {
-    mamargin-right: 24px;
-    width: 200px;
-    text-align: center;
-    color: #fff;
-    border-radius: 5px;
-    align-items: center;
-    justify-items: center;
-  }
+#custome-scale-line {
+  mamargin-right: 24px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+  align-items: center;
+  justify-items: center;
+}
 
-  .custome-scale-line-inner {
-    margin: 1px;
-    color: #eee;
-    font-size: 10px;
-    text-align: center;
-    background: #060505ba;
-    will-change: contents, width;
-  }
+.custome-scale-line-inner {
+  margin: 1px;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
 </style>
 
 <!-- Settings Section - 设置数据，将被自动解析 -->
 <settings>
-  <head-metadata> </head-metadata>
-  <css-links> </css-links>
-  <js-links> </js-links>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
 </settings>
