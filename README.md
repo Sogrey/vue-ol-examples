@@ -78,6 +78,7 @@ npm run preview
 - **天地图加载示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-tdt.html)
 - **格网和经纬网示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-TileGrid.html)
 - **格网显示示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-load-TileGrid2.html)
+- **位置信息栏示例**：[Example](https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-Location-Bar.html)
 
 ### 本地访问
 
@@ -181,7 +182,8 @@ public/
 │   ├── ol-load-BaiduMap.html      # 百度地图加载示例
 │   ├── ol-load-tdt.html           # 天地图加载示例
 │   ├── ol-load-TileGrid.html      # 格网和经纬网示例
-│   └── ol-load-TileGrid2.html     # 格网显示示例
+│   ├── ol-load-TileGrid2.html     # 格网显示示例
+│   └── ol-Location-Bar.html       # 位置信息栏示例
 └── ...
 ```
 
@@ -447,6 +449,35 @@ OpenLayers 加载格网示例，展示如何：
 - 清晰的网格线标识
 - 支持不同缩放级别的格网自适应
 - 简洁的代码结构，易于理解和扩展
+
+## 📍 地图状态显示示例
+
+### ol-Location-Bar (public/examples/ol-Location-Bar.html)
+
+OpenLayers 位置信息栏示例，展示如何：
+
+- 实时显示地图缩放级别和分辨率
+- 显示鼠标位置的经纬度坐标
+- 显示地图视图的方向/旋转角度
+- 创建自定义比例尺控件
+- 监听地图事件进行状态更新
+- **可直接访问**：部署后可通过 https://sogrey.top/CodeSandbox/?page=https://sogrey.top/vue-ol-examples/examples/ol-Location-Bar.html 直接访问
+
+#### 功能特点：
+
+- **实时状态监控**：缩放级别、分辨率、经纬度、方向角度实时更新
+- **自定义比例尺**：使用自定义CSS样式的比例尺控件
+- **坐标转换**：支持不同坐标系之间的转换显示
+- **事件监听**：监听`pointermove`、`change:resolution`、`moveend`等地图事件
+- **美观的UI设计**：底部状态栏布局，半透明背景，信息清晰展示
+- **精确度控制**：经纬度显示精确到小数点后6位
+
+#### 技术实现：
+
+- 使用`ol.control.ScaleLine`创建自定义比例尺
+- 通过`ol.proj.toLonLat()`进行坐标转换
+- 监听视图变化事件获取实时状态信息
+- 自定义CSS样式实现美观的状态栏界面
 
 更多示例持续更新中...
 
