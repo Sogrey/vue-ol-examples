@@ -1,6 +1,6 @@
 <!--
 CodeSandbox 分享文件
-生成时间: 2026/4/15 22:57:21
+生成时间: 2026/4/15 23:04:25
 页面标题: OpenLayers 加载SHP
 原始页面链接: https://sogrey.top/CodeSandbox/
 -->
@@ -17,7 +17,7 @@ CodeSandbox 分享文件
 <div class="custome-scale-line" id="custome-scale-line"></div>
 <div id="controls">
   <input type="file" id="shpUpload" accept=".zip" />
-  <button onclick="clearDebug()">清空日志</button>
+  <button id="clearDebug">清空日志</button>
 </div>
 <div id="debug"></div>
 </template>
@@ -74,9 +74,9 @@ function log(message, isError = false) {
   console.log(message);
 }
 
-function clearDebug() {
+document.getElementById('clearDebug').addEventListener('click', async (event) => {
   document.getElementById('debug').innerHTML = '';
-}
+});
 
 
 
