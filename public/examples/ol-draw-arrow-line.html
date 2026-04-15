@@ -1,0 +1,456 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/4/15 18:21:30
+页面标题: OpenLayers 箭头线绘制示例
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 箭头线绘制示例</title>
+<meta name="description" content="本例介绍了如何使用 OpenLayers 的 RegularShape 实现动态箭头线可视化。" />
+<template>
+<div id="map"></div>
+<div class="custome-scale-line" id="custome-scale-line"></div>
+<div class="info-panel">
+  <h3>🎯 OpenLayers 箭头线示例</h3>
+  <p>✅ 箭头方向：风向（风吹去的方向）</p>
+  <p>📏 箭头长度：代表风速大小</p>
+  <p>📍 包含固定箭头 + 动态气象数据</p>
+  <p>🖱️ 可拖拽、缩放地图查看</p>
+</div>
+<div class="legend">
+  <div style="font-weight: bold; margin-bottom: 5px;">图例</div>
+  <div class="legend-item">
+    <div class="legend-arrow">
+      <div class="legend-line"></div>
+      <div class="legend-head"></div>
+    </div>
+    <span>风向（北风→南）</span>
+  </div>
+  <div style="font-size: 11px; color: #999; margin-top: 5px;">
+    ＊ 箭头越长 = 风速越大
+  </div>
+</div>
+<button class="control-btn" onclick="addRandomArrow()">➕ 添加随机箭头</button>
+</template>
+<script>
+console.log(ol)
+
+// 创建比例尺控件
+const scaleLineControl = new ol.control.ScaleLine({
+  units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
+  className: 'custome-scale-line', // 自定义css类样式名
+  // minWidth: 200,// 最小宽度
+  target: document.querySelector("#custome-scale-line"), // 放置比例尺控件的目标容器
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+
+    // 加载比例尺控件
+    // scaleLineControl
+  ]),
+})
+// 后加载比例尺控件
+map.addControl(scaleLineControl)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+map.addLayer(gaodeLayer)
+
+// =============================
+
+// =============================
+// 箭头线绘制完整代码（接续你的地图初始化）
+// =============================
+
+// 1. 定义箭头样式
+const shaftStyle = new ol.style.RegularShape({
+  points: 2,
+  radius: 8,
+  stroke: new ol.style.Stroke({
+    width: 3,
+    color: '#ff4444'
+  }),
+  rotateWithView: true
+});
+
+const headStyle = new ol.style.RegularShape({
+  points: 3,
+  radius: 8,
+  fill: new ol.style.Fill({
+    color: '#ff4444'
+  }),
+  stroke: new ol.style.Stroke({
+    width: 1,
+    color: '#cc0000'
+  }),
+  rotateWithView: true
+});
+
+// 2. 创建矢量数据源和图层
+const arrowSource = new ol.source.Vector();
+const arrowLayer = new ol.layer.Vector({
+  source: arrowSource,
+  style: function(feature) {
+    const windDirection = feature.get('direction');
+    const windSpeed = feature.get('speed');
+    const angle = ((windDirection - 180) * Math.PI) / 180;
+    const scale = Math.min(windSpeed / 20, 2.5);
+
+    shaftStyle.setScale([1, scale]);
+    shaftStyle.setRotation(angle);
+
+    const displacement = 4 + 8 * scale;
+    headStyle.setDisplacement([0, displacement]);
+    headStyle.setRotation(angle);
+
+    return [
+      new ol.style.Style({
+        image: shaftStyle
+      }),
+      new ol.style.Style({
+        image: headStyle
+      })
+    ];
+  }
+});
+
+map.addLayer(arrowLayer);
+
+// 3. 示例数据（中国主要城市）
+const citiesData = [{
+    lon: 116.3974,
+    lat: 39.9093,
+    name: '北京',
+    direction: 45,
+    speed: 12
+  },
+  {
+    lon: 121.4737,
+    lat: 31.2304,
+    name: '上海',
+    direction: 120,
+    speed: 8
+  },
+  {
+    lon: 113.2644,
+    lat: 23.1291,
+    name: '广州',
+    direction: 180,
+    speed: 10
+  },
+  {
+    lon: 104.0668,
+    lat: 30.5728,
+    name: '成都',
+    direction: 270,
+    speed: 5
+  },
+  {
+    lon: 108.9480,
+    lat: 34.2632,
+    name: '西安',
+    direction: 0,
+    speed: 6
+  },
+  {
+    lon: 114.3055,
+    lat: 30.5931,
+    name: '武汉',
+    direction: 315,
+    speed: 9
+  },
+  {
+    lon: 118.7674,
+    lat: 31.8612,
+    name: '南京',
+    direction: 90,
+    speed: 7
+  },
+  {
+    lon: 106.5044,
+    lat: 29.5582,
+    name: '重庆',
+    direction: 225,
+    speed: 4
+  },
+  {
+    lon: 123.4315,
+    lat: 41.8057,
+    name: '沈阳',
+    direction: 20,
+    speed: 14
+  },
+  {
+    lon: 87.6168,
+    lat: 43.8256,
+    name: '乌鲁木齐',
+    direction: 350,
+    speed: 11
+  },
+  {
+    lon: 91.1409,
+    lat: 29.6564,
+    name: '拉萨',
+    direction: 200,
+    speed: 7
+  }
+];
+
+citiesData.forEach(city => {
+  const feature = new ol.Feature({
+    geometry: new ol.geom.Point(ol.proj.fromLonLat([city.lon, city.lat])),
+    direction: city.direction,
+    speed: city.speed,
+    name: city.name
+  });
+  arrowSource.addFeature(feature);
+});
+
+console.log(`✅ 已添加 ${citiesData.length} 个城市箭头`);
+
+// 4. 辅助函数
+window.addArrow = function(lon, lat, direction, speed, name) {
+  const feature = new ol.Feature({
+    geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat])),
+    direction: direction,
+    speed: speed,
+    name: name || `箭头_${Date.now()}`
+  });
+  arrowSource.addFeature(feature);
+  console.log(`✅ 添加箭头: ${name} (${lon}, ${lat}) 风向${direction}° 风速${speed}m/s`);
+};
+
+window.clearArrows = function() {
+  arrowSource.clear();
+  console.log('🗑️ 已清除所有箭头');
+};
+
+// 5. 在可视范围内添加随机箭头
+window.addRandomArrow = function() {
+  const view = map.getView();
+  const extent = view.calculateExtent(); // 获取当前可视范围（投影坐标）
+
+  // 在可视范围内随机生成投影坐标
+  const randomX = extent[0] + Math.random() * (extent[2] - extent[0]);
+  const randomY = extent[1] + Math.random() * (extent[3] - extent[1]);
+
+  // 转换为经纬度用于显示
+  const lonLat = ol.proj.toLonLat([randomX, randomY]);
+
+  const direction = Math.floor(Math.random() * 360);
+  const speed = 5 + Math.random() * 20;
+  const name = `随机_${lonLat[0].toFixed(2)}_${lonLat[1].toFixed(2)}`;
+
+  const feature = new ol.Feature({
+    geometry: new ol.geom.Point([randomX, randomY]),
+    direction: direction,
+    speed: speed,
+    name: name
+  });
+
+  arrowSource.addFeature(feature);
+  console.log(`✅ 可视范围内添加: ${name} | 风向:${direction}° 风速:${speed.toFixed(1)}m/s`);
+};
+
+// 6. 批量添加随机箭头
+window.addRandomArrows = function(count = 5) {
+  for (let i = 0; i < count; i++) {
+    addRandomArrow();
+  }
+  console.log(`✅ 已批量添加 ${count} 个随机箭头到可视范围`);
+};
+
+// 7. 刷新（清空并重新生成）
+window.refreshRandomArrows = function(count = 10) {
+  clearArrows();
+  addRandomArrows(count);
+};
+
+// 8. 鼠标悬停效果
+map.on('pointermove', function(event) {
+  const feature = map.forEachFeatureAtPixel(event.pixel, f => f);
+  map.getTargetElement().style.cursor = feature && feature.get('name') ? 'pointer' : '';
+});
+
+// 控制台提示
+console.log('');
+console.log('🎯 箭头功能已加载！');
+console.log('📌 可用命令：');
+console.log('   addRandomArrow()        - 可视范围内添加随机箭头');
+console.log('   addRandomArrows(数量)   - 批量添加随机箭头');
+console.log('   refreshRandomArrows(数量) - 清空并重新生成');
+console.log('   addArrow(经度,纬度,风向,风速,"名称") - 添加指定箭头');
+console.log('   clearArrows()           - 清除所有箭头');
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-scale-line {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.custome-scale-line-inner {
+  margin: 1px;
+  border: 1px solid #eee;
+  border-top: none;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
+
+.info-panel {
+  position: absolute;
+  top: 30px;
+  right: 20px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 14px;
+  max-width: 300px;
+  pointer-events: none;
+}
+
+.info-panel h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.info-panel p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.legend {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  background: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.legend-arrow {
+  width: 40px;
+  height: 20px;
+  position: relative;
+  margin-right: 10px;
+}
+
+.legend-line {
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 30px;
+  height: 2px;
+  background: #ff4444;
+}
+
+.legend-head {
+  position: absolute;
+  right: 0;
+  top: 5px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid #ff4444;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.control-btn {
+  position: absolute;
+  bottom: 60px;
+  left: 20px;
+  background: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+  pointer-events: auto;
+}
+
+.control-btn:hover {
+  background: #f0f0f0;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>

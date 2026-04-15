@@ -1,0 +1,265 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/4/15 11:06:07
+页面标题: OpenLayers 加载SHP
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载SHP</title>
+<meta name="description" content="基于OpenLayers加载SPHP文件（zip压缩包，ZIP 包根目录下须包含 .shp、.dbf、.shx 文件）。（测试文件：http://data.mars3d.cn/file/shp/hefei_xz.zip）" />
+<template>
+<div id="map"></div>
+<div class="custome-scale-line" id="custome-scale-line"></div>
+<div id="controls">
+  <input type="file" id="shpUpload" accept=".zip" />
+  <button onclick="clearDebug()">清空日志</button>
+</div>
+<div id="debug"></div>
+</template>
+<script type="module">
+console.log(ol)
+
+// 创建比例尺控件
+const scaleLineControl = new ol.control.ScaleLine({
+  units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
+  className: 'custome-scale-line', // 自定义css类样式名
+  // minWidth: 200,// 最小宽度
+  target: document.querySelector("#custome-scale-line"), // 放置比例尺控件的目标容器
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+
+    // 加载比例尺控件
+    // scaleLineControl
+  ]),
+})
+// 后加载比例尺控件
+map.addControl(scaleLineControl)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+map.addLayer(gaodeLayer)
+
+// =============================
+function log(message, isError = false) {
+  const debugDiv = document.getElementById('debug');
+  const entry = document.createElement('div');
+  entry.textContent = new Date().toLocaleTimeString() + ': ' + message;
+  entry.style.color = isError ? '#f00' : '#0f0';
+  debugDiv.appendChild(entry);
+  debugDiv.scrollTop = debugDiv.scrollHeight;
+  console.log(message);
+}
+
+function clearDebug() {
+  document.getElementById('debug').innerHTML = '';
+}
+
+
+
+document.getElementById('shpUpload').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  log(`开始处理文件: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+
+  try {
+    // 1. 读取并分析 ZIP 结构
+    const arrayBuffer = await file.arrayBuffer();
+    log('文件读取成功，大小: ' + arrayBuffer.byteLength + ' bytes');
+
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const zipFiles = Object.keys(zip.files);
+    log(`ZIP 包含 ${zipFiles.length} 个文件:`);
+    zipFiles.forEach(f => log(`  - ${f}`));
+
+    // 2. 检查必要文件
+    const hasShp = zipFiles.some(f => f.toLowerCase().endsWith('.shp'));
+    const hasDbf = zipFiles.some(f => f.toLowerCase().endsWith('.dbf'));
+    const hasShx = zipFiles.some(f => f.toLowerCase().endsWith('.shx'));
+
+    log(`文件检查: .shp=${hasShp}, .dbf=${hasDbf}, .shx=${hasShx}`);
+
+    if (!hasShp || !hasDbf) {
+      throw new Error('缺少必要文件 (.shp 或 .dbf)');
+    }
+
+    // 3. 尝试解析
+    log('开始解析 Shapefile...');
+    let geojson;
+
+    try {
+      // 尝试直接解析 ArrayBuffer
+      geojson = await shp(arrayBuffer);
+    } catch (e) {
+      log('直接解析失败，尝试使用 ZIP 对象解析...', true);
+      geojson = await shp(zip);
+    }
+
+    if (!geojson) {
+      throw new Error('解析返回空结果');
+    }
+
+    // 4. 检查结果
+    if (geojson.type === 'FeatureCollection') {
+      log(`成功解析为 FeatureCollection，包含 ${geojson.features.length} 个要素`);
+    } else if (Array.isArray(geojson)) {
+      log(`成功解析，包含 ${geojson.length} 个图层`);
+      geojson = geojson[0]; // 取第一个图层
+    } else {
+      log(`解析结果类型: ${geojson.type}`);
+    }
+
+    // 5. 渲染
+    const format = new ol.format.GeoJSON();
+    const features = format.readFeatures(geojson, {
+      featureProjection: 'EPSG:3857'
+    });
+
+    log(`成功创建 ${features.length} 个 OpenLayers 要素`);
+
+    const vectorSource = new ol.source.Vector({
+      features: features
+    });
+    const vectorLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 255, 255, 0.4)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: '#ffcc33',
+          width: 2
+        })
+      })
+    });
+
+    map.addLayer(vectorLayer);
+
+    const extent = vectorSource.getExtent();
+    if (!ol.extent.isEmpty(extent)) {
+      map.getView().fit(extent, {
+        padding: [50, 50, 50, 50]
+      });
+      log(`地图已缩放到数据范围`);
+    }
+
+    log('✅ 加载成功！');
+
+  } catch (error) {
+    log(`❌ 错误: ${error.message}`, true);
+    log(`错误详情: ${error.stack}`, true);
+    alert(`加载失败: ${error.message}\n\n请查看下方调试信息`);
+  }
+});
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-scale-line {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.custome-scale-line-inner {
+  margin: 1px;
+  border: 1px solid #eee;
+  border-top: none;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
+
+#controls {
+  position: absolute;
+  top: 30px;
+  right: 50px;
+  z-index: 1000;
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#debug {
+  position: absolute;
+  bottom: 40px;
+  left: 50px;
+  right: 50px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #0f0;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 12px;
+  z-index: 1000;
+  max-height: 200px;
+  overflow: auto;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+https://cdnjs.cloudflare.com/ajax/libs/shpjs/3.6.2/shp.js
+https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js
+</js-links>
+</settings>

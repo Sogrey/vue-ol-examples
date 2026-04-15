@@ -1,0 +1,375 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/4/15 11:03:16
+页面标题: OpenLayers 加载SHP(多策略)
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 加载SHP(多策略)</title>
+<meta name="description" content="基于OpenLayers加载SPHP文件（zip压缩包，ZIP 包根目录下须包含 .shp、.dbf、.shx 文件）。
+
+策略1: 直接使用 shp 解析 ArrayBuffer;
+策略2: 使用 JSZip 后传给 shp;
+策略3: 手动提取 .shp 和 .dbf 文件。 （测试文件：http://data.mars3d.cn/file/shp/hefei_xz.zip）" />
+<template>
+<div id="map"></div>
+<div class="custome-scale-line" id="custome-scale-line"></div>
+<div class="upload-panel">
+  <label for="shpUpload">📁 上传 Shapefile (ZIP)</label>
+  <input type="file" id="shpUpload" accept=".zip" />
+  <div id="status" class="status">准备就绪</div>
+</div>
+</template>
+<script>
+console.log(ol)
+
+// 创建比例尺控件
+const scaleLineControl = new ol.control.ScaleLine({
+  units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
+  className: 'custome-scale-line', // 自定义css类样式名
+  // minWidth: 200,// 最小宽度
+  target: document.querySelector("#custome-scale-line"), // 放置比例尺控件的目标容器
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+
+    // 加载比例尺控件
+    // scaleLineControl
+  ]),
+})
+// 后加载比例尺控件
+map.addControl(scaleLineControl)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+map.addLayer(gaodeLayer)
+
+// =============================
+
+
+
+
+let currentVectorLayer = null;
+const statusDiv = document.getElementById('status');
+
+function setStatus(message, type = 'info') {
+  statusDiv.textContent = message;
+  statusDiv.className = `status ${type}`;
+  console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+// 核心解析函数 - 多种策略
+async function parseShapefile(file) {
+  const arrayBuffer = await file.arrayBuffer();
+
+  // 策略1: 直接使用 shp 解析 ArrayBuffer
+  try {
+    setStatus('尝试策略1: 直接解析 ArrayBuffer...', 'loading');
+    const result = await shp(arrayBuffer);
+    if (result && (result.features?.length > 0 || Array.isArray(result))) {
+      console.log('策略1成功');
+      return result;
+    }
+  } catch (e) {
+    console.log('策略1失败:', e.message);
+  }
+
+  // 策略2: 使用 JSZip 后传给 shp
+  try {
+    setStatus('尝试策略2: JSZip + shp...', 'loading');
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const result = await shp(zip);
+    if (result && (result.features?.length > 0 || Array.isArray(result))) {
+      console.log('策略2成功');
+      return result;
+    }
+  } catch (e) {
+    console.log('策略2失败:', e.message);
+  }
+
+  // 策略3: 手动提取 .shp 和 .dbf 文件
+  try {
+    setStatus('尝试策略3: 手动提取 SHP/DBF 文件...', 'loading');
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    // 查找 .shp 和 .dbf 文件
+    let shpFile = null;
+    let dbfFile = null;
+    let shxFile = null;
+
+    for (const [filename, fileObj] of Object.entries(zip.files)) {
+      const lowerName = filename.toLowerCase();
+      if (lowerName.endsWith('.shp') && !fileObj.dir) {
+        shpFile = fileObj;
+        console.log('找到 SHP 文件:', filename);
+      }
+      if (lowerName.endsWith('.dbf') && !fileObj.dir) {
+        dbfFile = fileObj;
+        console.log('找到 DBF 文件:', filename);
+      }
+      if (lowerName.endsWith('.shx') && !fileObj.dir) {
+        shxFile = fileObj;
+        console.log('找到 SHX 文件:', filename);
+      }
+    }
+
+    if (!shpFile || !dbfFile) {
+      throw new Error('未找到 .shp 或 .dbf 文件');
+    }
+
+    // 读取文件内容
+    const shpData = await shpFile.async('arraybuffer');
+    const dbfData = await dbfFile.async('arraybuffer');
+
+    // 使用 shpjs 的组合解析函数
+    const result = await shp.combine([shpData, dbfData]);
+    if (result && (result.features?.length > 0)) {
+      console.log('策略3成功，解析出', result.features.length, '个要素');
+      return result;
+    }
+  } catch (e) {
+    console.log('策略3失败:', e.message);
+  }
+
+  throw new Error('所有解析策略均失败，请确保 ZIP 包包含有效的 .shp 和 .dbf 文件');
+}
+
+document.getElementById('shpUpload').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  setStatus(`正在处理: ${file.name}...`, 'loading');
+
+  try {
+    // 解析 Shapefile
+    const geojson = await parseShapefile(file);
+
+    // 处理解析结果
+    let featuresData = geojson;
+
+    // 如果是数组（多个图层），合并所有要素
+    if (Array.isArray(geojson)) {
+      const allFeatures = [];
+      for (const layer of geojson) {
+        if (layer && layer.features) {
+          allFeatures.push(...layer.features);
+        } else if (layer && layer.type === 'Feature') {
+          allFeatures.push(layer);
+        }
+      }
+      featuresData = {
+        type: 'FeatureCollection',
+        features: allFeatures
+      };
+      setStatus(`检测到 ${geojson.length} 个图层，共 ${allFeatures.length} 个要素`, 'success');
+    }
+
+    // 如果是 FeatureCollection
+    if (geojson.type === 'FeatureCollection') {
+      setStatus(`解析成功，共 ${geojson.features.length} 个要素`, 'success');
+    }
+
+    // 转换为 OpenLayers 要素
+    const format = new ol.format.GeoJSON();
+    const features = format.readFeatures(featuresData, {
+      featureProjection: 'EPSG:3857',
+      dataProjection: 'EPSG:4326'
+    });
+
+    if (features.length === 0) {
+      throw new Error('没有可显示的要素');
+    }
+
+    console.log('成功创建', features.length, '个 OpenLayers 要素');
+
+    // 创建矢量数据源
+    const vectorSource = new ol.source.Vector({
+      features: features
+    });
+
+    // 创建矢量图层
+    const vectorLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: 'rgba(65, 105, 225, 0.3)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: '#4169E1',
+          width: 2
+        }),
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({
+            color: '#4169E1'
+          }),
+          stroke: new ol.style.Stroke({
+            color: '#fff',
+            width: 2
+          })
+        })
+      })
+    });
+
+    // 移除旧图层，添加新图层
+    if (currentVectorLayer) {
+      map.removeLayer(currentVectorLayer);
+    }
+    map.addLayer(vectorLayer);
+    currentVectorLayer = vectorLayer;
+
+    // 自动缩放到数据范围
+    const extent = vectorSource.getExtent();
+    if (!ol.extent.isEmpty(extent) && isFinite(extent[0]) && isFinite(extent[1])) {
+      map.getView().fit(extent, {
+        padding: [50, 50, 50, 50]
+      });
+    }
+
+    setStatus(`✅ 加载成功！共显示 ${features.length} 个要素`, 'success');
+
+  } catch (error) {
+    console.error('详细错误:', error);
+    setStatus(`❌ 加载失败: ${error.message}`, 'error');
+
+    // 显示帮助信息
+    setTimeout(() => {
+      setStatus('💡 提示：请确保 ZIP 包包含 .shp, .shx, .dbf 文件，且文件名不含中文', 'error');
+    }, 3000);
+  }
+});
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-scale-line {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.custome-scale-line-inner {
+  margin: 1px;
+  border: 1px solid #eee;
+  border-top: none;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
+
+.upload-panel {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 1000;
+  background: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.upload-panel label {
+  background: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+  display: inline-block;
+}
+
+.upload-panel label:hover {
+  background: #45a049;
+}
+
+.upload-panel input {
+  display: none;
+}
+
+.status {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.status.success {
+  color: #4CAF50;
+}
+
+.status.error {
+  color: #f44336;
+}
+
+.status.loading {
+  color: #ff9800;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+https://cdnjs.cloudflare.com/ajax/libs/shpjs/3.6.2/shp.js
+https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js
+</js-links>
+</settings>
