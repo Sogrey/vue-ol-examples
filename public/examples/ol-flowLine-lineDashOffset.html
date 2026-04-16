@@ -1,0 +1,416 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/4/17 00:45:41
+页面标题: OpenLayers 流动线 · lineDashOffset 高性能模式
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 流动线 · lineDashOffset 高性能模式</title>
+<meta name="description" content=" OpenLayers 官方推荐、生产级可用、极致性能 的流动线实现方案 ——lineDashOffset 虚线偏移法，支持多线条、可配置、带控制面板、支持流动启停，100 行核心代码搞定。" />
+<template>
+<div id="map"></div>
+<div class="custome-scale-line" id="custome-scale-line"></div>
+
+<div class="status" id="status">⚡ 流动线已启动 · lineDashOffset 高性能模式</div>
+<div class="controls">
+  <button id="drawBtn">✏️ 开始绘制</button>
+  <button id="clearBtn">🗑️ 清除所有</button>
+  <button id="sampleBtn">📊 添加示例线</button>
+  <button id="flowToggleBtn">⏸️ 暂停流动</button>
+</div>
+
+<div class="config-panel">
+  <h4>🎞️ 流动线参数</h4>
+  <div>
+    <label>速度</label>
+    <input type="range" id="flowSpeed" min="0.5" max="5" step="0.2" value="1">
+    <span id="speedVal">1</span>
+  </div>
+  <div>
+    <label>流动段</label>
+    <input type="range" id="dashSolid" min="5" max="50" step="1" value="20">
+    <span id="solidVal">20</span>
+  </div>
+  <div>
+    <label>间隔</label>
+    <input type="range" id="dashSpace" min="5" max="50" step="1" value="27">
+    <span id="spaceVal">27</span>
+  </div>
+  <div>
+    <label>主线宽</label>
+    <input type="range" id="mainWidth" min="6" max="20" step="1" value="12">
+    <span id="mainWVal">12</span>
+  </div>
+  <div>
+    <label>边框宽</label>
+    <input type="range" id="borderWidth" min="8" max="24" step="1" value="16">
+    <span id="borderWVal">16</span>
+  </div>
+  <div>
+    <label>主线色</label>
+    <input type="color" id="mainColor" value="#00ba6b">
+  </div>
+  <div>
+    <label>边框色</label>
+    <input type="color" id="borderColor" value="#046e4a">
+  </div>
+  <div>
+    <label>流动色</label>
+    <input type="color" id="flowColor" value="#ffffff">
+  </div>
+</div>
+</template>
+<script>
+console.log(ol)
+
+// 创建比例尺控件
+const scaleLineControl = new ol.control.ScaleLine({
+  units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
+  className: 'custome-scale-line', // 自定义css类样式名
+  // minWidth: 200,// 最小宽度
+  target: document.querySelector("#custome-scale-line"), // 放置比例尺控件的目标容器
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+
+    // 加载比例尺控件
+    // scaleLineControl
+  ]),
+})
+// 后加载比例尺控件
+map.addControl(scaleLineControl)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+map.addLayer(gaodeLayer)
+
+const dragRotate = new ol.interaction.DragRotate({
+  condition: ol.events.condition.platformModifierKeyOnly,
+  duration: 250,
+});
+
+map.addInteraction(dragRotate);
+
+
+// =============================
+
+
+// ===================== 全局参数 =====================
+const flowConfig = {
+  speed: 1,
+  dashSolid: 20,
+  dashSpace: 27,
+  mainWidth: 12,
+  borderWidth: 16,
+  mainColor: '#00ba6b',
+  borderColor: '#046e4a',
+  flowColor: '#ffffff'
+}
+
+// ===================== 流动线图层 =====================
+const vectorSource = new ol.source.Vector();
+const vectorLayer = new ol.layer.Vector({
+  source: vectorSource,
+  style: function(feature) {
+    const flowOffset = feature.get('flowOffset');
+    const dashPattern = [flowConfig.dashSolid, flowConfig.dashSpace];
+    return [
+      new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: flowConfig.borderColor,
+          width: flowConfig.borderWidth
+        })
+      }),
+      new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: flowConfig.mainColor,
+          width: flowConfig.mainWidth
+        })
+      }),
+      new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: flowConfig.flowColor,
+          width: flowConfig.mainWidth,
+          lineDash: dashPattern,
+          lineDashOffset: flowOffset
+        })
+      })
+    ];
+  }
+});
+map.addLayer(vectorLayer);
+
+// 创建流动线
+function createFlowLine(coords) {
+  const line = new ol.geom.LineString(coords).transform('EPSG:4326', 'EPSG:3857');
+  const f = new ol.Feature({
+    geometry: line
+  });
+  f.set('flowOffset', 0);
+  return f;
+}
+
+// 默认线
+const defaultCoords = [
+  [116.390, 39.900],
+  [116.395, 39.905],
+  [116.400, 39.902],
+  [116.405, 39.907],
+  [116.410, 39.905]
+];
+vectorSource.addFeature(createFlowLine(defaultCoords));
+
+// ===================== 流动动画开关 =====================
+let isFlowing = true;
+let animationId = null;
+
+function animateFlow() {
+  if (!isFlowing) return;
+  const features = vectorSource.getFeatures();
+  const totalDash = flowConfig.dashSolid + flowConfig.dashSpace;
+
+  features.forEach(f => {
+    let offset = f.get('flowOffset');
+    offset -= flowConfig.speed;
+    if (offset < -totalDash) offset = 0;
+    f.set('flowOffset', offset);
+  });
+  animationId = requestAnimationFrame(animateFlow);
+}
+animateFlow();
+
+// ===================== 面板绑定 =====================
+const $ = document.querySelector.bind(document);
+
+$('#flowSpeed').addEventListener('input', e => {
+  flowConfig.speed = +e.target.value;
+  $('#speedVal').textContent = e.target.value;
+});
+$('#dashSolid').addEventListener('input', e => {
+  flowConfig.dashSolid = +e.target.value;
+  $('#solidVal').textContent = e.target.value;
+});
+$('#dashSpace').addEventListener('input', e => {
+  flowConfig.dashSpace = +e.target.value;
+  $('#spaceVal').textContent = e.target.value;
+});
+$('#mainWidth').addEventListener('input', e => {
+  flowConfig.mainWidth = +e.target.value;
+  $('#mainWVal').textContent = e.target.value;
+});
+$('#borderWidth').addEventListener('input', e => {
+  flowConfig.borderWidth = +e.target.value;
+  $('#borderWVal').textContent = e.target.value;
+});
+$('#mainColor').addEventListener('input', e => flowConfig.mainColor = e.target.value);
+$('#borderColor').addEventListener('input', e => flowConfig.borderColor = e.target.value);
+$('#flowColor').addEventListener('input', e => flowConfig.flowColor = e.target.value);
+
+// 流动开关
+$('#flowToggleBtn').addEventListener('click', () => {
+  isFlowing = !isFlowing;
+  const btn = $('#flowToggleBtn');
+  const status = $('#status');
+
+  if (isFlowing) {
+    btn.textContent = '⏸️ 暂停流动';
+    status.textContent = '⚡ 流动线已启动 · lineDashOffset 高性能模式';
+    animateFlow();
+  } else {
+    btn.textContent = '▶️ 启动流动';
+    status.textContent = '⏸️ 流动已暂停';
+  }
+});
+
+// ===================== 按钮功能 =====================
+$('#clearBtn').addEventListener('click', () => vectorSource.clear());
+$('#sampleBtn').addEventListener('click', () => {
+  vectorSource.addFeature(createFlowLine([
+    [116.390, 39.900],
+    [116.395, 39.905],
+    [116.400, 39.902],
+    [116.405, 39.907],
+    [116.410, 39.905]
+  ]));
+});
+$('#drawBtn').addEventListener('click', () => alert('绘制功能可自行扩展'));
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-scale-line {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.custome-scale-line-inner {
+  margin: 1px;
+  border: 1px solid #eee;
+  border-top: none;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
+
+/*=============================*/
+
+
+
+
+/* 控制面板 */
+.controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+button:hover {
+  background: #f0f0f0;
+}
+
+/* 🔥 紧凑优化面板 */
+.config-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 12px;
+  min-width: 180px;
+}
+
+.config-panel h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.config-panel div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.config-panel label {
+  width: 40px;
+  font-size: 12px;
+}
+
+.config-panel input[type="range"] {
+  flex: 1;
+  height: 16px;
+}
+
+.config-panel input[type="color"] {
+  width: 100%;
+  height: 22px;
+  padding: 0;
+  border: none;
+}
+
+.config-panel span {
+  font-size: 12px;
+  min-width: 20px;
+  text-align: right;
+}
+
+.status {
+  position: absolute;
+  top: 40px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
