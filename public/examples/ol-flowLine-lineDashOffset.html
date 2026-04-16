@@ -1,6 +1,6 @@
 <!--
 CodeSandbox 分享文件
-生成时间: 2026/4/17 00:45:41
+生成时间: 2026/4/17 01:03:57
 页面标题: OpenLayers 流动线 · lineDashOffset 高性能模式
 原始页面链接: https://sogrey.top/CodeSandbox/
 -->
@@ -9,7 +9,7 @@ CodeSandbox 分享文件
 <!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
 <engine-type>openlayers</engine-type>
 <title>OpenLayers 流动线 · lineDashOffset 高性能模式</title>
-<meta name="description" content=" OpenLayers 官方推荐、生产级可用、极致性能 的流动线实现方案 ——lineDashOffset 虚线偏移法，支持多线条、可配置、带控制面板、支持流动启停，100 行核心代码搞定。" />
+<meta name="description" content="OpenLayers 官方推荐、生产级可用、极致性能 的流动线实现方案 ——lineDashOffset 虚线偏移法，支持多线条、可配置、带控制面板、支持流动启停，100 行核心代码搞定。" />
 <template>
 <div id="map"></div>
 <div class="custome-scale-line" id="custome-scale-line"></div>
@@ -200,6 +200,18 @@ function animateFlow() {
 }
 animateFlow();
 
+function fitToFeatures() {
+  const ext = vectorSource.getExtent();
+  if (ol.extent.isEmpty(ext)) return;
+  map.getView().fit(ext, {
+    padding: [50, 50, 50, 50],
+    duration: 300 // 平滑动画
+  });
+}
+
+
+setTimeout(fitToFeatures, 2000);
+
 // ===================== 面板绑定 =====================
 const $ = document.querySelector.bind(document);
 
@@ -253,6 +265,7 @@ $('#sampleBtn').addEventListener('click', () => {
     [116.405, 39.907],
     [116.410, 39.905]
   ]));
+  setTimeout(fitToFeatures, 100);
 });
 $('#drawBtn').addEventListener('click', () => alert('绘制功能可自行扩展'));
 </script>
