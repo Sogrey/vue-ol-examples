@@ -1,0 +1,550 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/4/16 14:49:57
+页面标题: OpenLayers 线段箭头 + 实时预览
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 线段箭头 + 实时预览</title>
+<meta name="description" content="本例介绍了如何使用 OpenLayers 的 RegularShape 实现绘制动态箭头线。可实时调整线宽、箭头大小（箭头长度、张角大小）" />
+<template>
+<div id="map"></div>
+<div class="custome-scale-line" id="custome-scale-line"></div>
+
+<div class="status" id="status">⚡ 点击地图开始绘制线段</div>
+<div class="controls">
+  <button id="drawBtn">✏️ 开始绘制</button>
+  <button id="clearBtn">🗑️ 清除所有</button>
+  <button id="sampleBtn">📊 添加示例线</button>
+</div>
+<div class="config-panel">
+  <h4>🎨 箭头参数</h4>
+  <div>大小:
+    <input type="range" id="arrowSize" min="10" max="28" step="1" value="18">
+    <span id="sizeVal">18</span>
+  </div>
+  <div>张角:
+    <input type="range" id="arrowAngle" min="15" max="70" step="5" value="35">
+    <span id="angleVal">35</span>°
+    <div style="font-size: 10px;">15°很尖 | 35°标准 | 70°很钝</div>
+  </div>
+  <div>线宽:
+    <input type="range" id="lineWidth" min="1" max="6" step="0.5" value="2">
+    <span id="lineWidthVal">2</span>
+  </div>
+  <div>颜色:
+    <input type="color" id="arrowColor" value="#ff4444">
+  </div>
+</div>
+</template>
+<script>
+console.log(ol)
+
+// 创建比例尺控件
+const scaleLineControl = new ol.control.ScaleLine({
+  units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
+  className: 'custome-scale-line', // 自定义css类样式名
+  // minWidth: 200,// 最小宽度
+  target: document.querySelector("#custome-scale-line"), // 放置比例尺控件的目标容器
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [11421771, 4288300],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:3857',
+  }),
+  // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+  controls: ol.control.defaults.defaults().extend([
+    // 加载鼠标控件
+    new ol.control.MousePosition(),
+
+    // 加载比例尺控件
+    // scaleLineControl
+  ]),
+})
+// 后加载比例尺控件
+map.addControl(scaleLineControl)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+map.addLayer(gaodeLayer)
+
+const dragRotate = new ol.interaction.DragRotate({
+  condition: ol.events.condition.platformModifierKeyOnly,
+  duration: 250,
+});
+
+map.addInteraction(dragRotate);
+
+
+// =============================
+
+
+
+
+// ============================================
+// 最终简化版：始终显示箭头，不依赖 isDrawing
+// ============================================
+
+// 可配置的箭头参数
+const arrowConfig = {
+  size: 18, // 箭头大小
+  angle: 35, // 张角（度数）
+  color: '#ff4444',
+  strokeWidth: 2,
+  strokeColor: '#ff4444'
+};
+
+// 存储当前绘制中的要素
+let currentSketchFeature = null;
+let drawInteraction = null;
+let isDrawingMode = false;
+
+// 定义数据源
+const lineSource = new ol.source.Vector();
+
+// 根据张角计算缩放比例
+function getScaleFromAngle(angleDeg) {
+  const baseAngle = 30;
+  const halfRad = (angleDeg / 2) * Math.PI / 180;
+  const baseHalfRad = (baseAngle / 2) * Math.PI / 180;
+  const scale = Math.tan(halfRad) / Math.tan(baseHalfRad);
+  return Math.min(scale, 2.5);
+}
+
+// 创建箭头样式
+function getArrowStyle(rotation, color) {
+  const widthScale = getScaleFromAngle(arrowConfig.angle);
+
+  return new ol.style.Style({
+    image: new ol.style.RegularShape({
+      points: 3,
+      radius: arrowConfig.size,
+      fill: new ol.style.Fill({
+        color: color
+      }),
+      stroke: new ol.style.Stroke({
+        width: 1,
+        color: color
+      }),
+      rotation: rotation,
+      scale: [widthScale, 1],
+      rotateWithView: true
+    })
+  });
+}
+
+// 临时预览图层（绘制过程中使用）
+const tempArrowSource = new ol.source.Vector();
+const tempArrowLayer = new ol.layer.Vector({
+  source: tempArrowSource,
+  style: (feature) => {
+    const rotation = feature.get('rotation');
+    if (rotation === undefined) return [];
+    return getArrowStyle(rotation, '#ffaa33');
+  }
+});
+
+// 主图层 - 简化版，始终显示箭头
+const lineLayer = new ol.layer.Vector({
+  source: lineSource,
+  style: (feature) => {
+    const geometry = feature.getGeometry();
+    if (!geometry) return [];
+
+    const coordinates = geometry.getCoordinates();
+    const styles = [];
+
+    // 线段样式 - 使用配置的颜色
+    styles.push(new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: arrowConfig.strokeColor,
+        width: arrowConfig.strokeWidth
+      })
+    }));
+
+    // 为每一个线段段添加箭头（只添加最后一段）
+    if (coordinates && coordinates.length >= 2) {
+      const lastIdx = coordinates.length - 1;
+      const start = coordinates[lastIdx - 1];
+      const end = coordinates[lastIdx];
+
+      const dx = end[0] - start[0];
+      const dy = end[1] - start[1];
+
+      if (Math.abs(dx) > 1e-8 || Math.abs(dy) > 1e-8) {
+        const angle = Math.atan2(dy, dx);
+        const rotation = -angle + Math.PI / 2;
+
+        // 在终点添加箭头
+        styles.push(new ol.style.Style({
+          geometry: new ol.geom.Point(end),
+          image: new ol.style.RegularShape({
+            points: 3,
+            radius: arrowConfig.size,
+            fill: new ol.style.Fill({
+              color: arrowConfig.color
+            }),
+            stroke: new ol.style.Stroke({
+              width: 1,
+              color: arrowConfig.color
+            }),
+            rotation: rotation,
+            scale: [getScaleFromAngle(arrowConfig.angle), 1],
+            rotateWithView: true
+          })
+        }));
+      }
+    }
+
+    return styles;
+  }
+});
+
+// 添加图层
+map.addLayer(lineLayer);
+map.addLayer(tempArrowLayer);
+
+// 创建绘制交互
+function createDrawInteraction() {
+  if (drawInteraction) {
+    map.removeInteraction(drawInteraction);
+  }
+
+  drawInteraction = new ol.interaction.Draw({
+    source: lineSource,
+    type: 'LineString',
+    freehand: false
+  });
+
+  drawInteraction.on('drawstart', (evt) => {
+    currentSketchFeature = evt.feature;
+    console.log('✏️ 开始绘制');
+  });
+
+  drawInteraction.on('drawend', (evt) => {
+    currentSketchFeature = null;
+    tempArrowSource.clear();
+    console.log('✅ 绘制完成，红色箭头应显示');
+    // 强制刷新图层
+    lineLayer.changed();
+  });
+
+  map.addInteraction(drawInteraction);
+}
+
+// 预览箭头（绘制过程中显示橙色箭头）
+map.on('pointermove', (evt) => {
+  if (!currentSketchFeature) {
+    tempArrowSource.clear();
+    return;
+  }
+
+  const geometry = currentSketchFeature.getGeometry();
+  if (!geometry) return;
+
+  const coordinates = geometry.getCoordinates();
+  if (coordinates.length === 0) {
+    tempArrowSource.clear();
+    return;
+  }
+
+  const currentPoint = evt.coordinate;
+  let rotation = null;
+
+  if (coordinates.length >= 2) {
+    const lastIdx = coordinates.length - 1;
+    const start = coordinates[lastIdx - 1];
+    const end = coordinates[lastIdx];
+    const dx = end[0] - start[0];
+    const dy = end[1] - start[1];
+    if (Math.abs(dx) > 1e-8 || Math.abs(dy) > 1e-8) {
+      const angle = Math.atan2(dy, dx);
+      rotation = -angle + Math.PI / 2;
+    }
+  } else if (coordinates.length === 1) {
+    const start = coordinates[0];
+    const dx = currentPoint[0] - start[0];
+    const dy = currentPoint[1] - start[1];
+    if (Math.abs(dx) > 1e-8 || Math.abs(dy) > 1e-8) {
+      const angle = Math.atan2(dy, dx);
+      rotation = -angle + Math.PI / 2;
+    }
+  }
+
+  if (rotation !== null) {
+    tempArrowSource.clear();
+    const arrowFeature = new ol.Feature({
+      geometry: new ol.geom.Point(currentPoint),
+      rotation: rotation
+    });
+    tempArrowSource.addFeature(arrowFeature);
+  } else {
+    tempArrowSource.clear();
+  }
+});
+
+// 添加示例线段
+function addSampleLine() {
+  lineSource.clear();
+  const sampleLine = new ol.Feature({
+    geometry: new ol.geom.LineString([
+      ol.proj.fromLonLat([121.4737, 31.2304]), // 上海
+      ol.proj.fromLonLat([116.3974, 39.9093]) // 北京
+    ])
+  });
+  lineSource.addFeature(sampleLine);
+  console.log('✅ 已添加示例线段（上海→北京）');
+  // 强制刷新
+  lineLayer.changed();
+}
+
+function clearAllLines() {
+  lineSource.clear();
+  tempArrowSource.clear();
+  console.log('🗑️ 已清除所有线段');
+}
+
+function refreshArrowStyle() {
+  lineLayer.changed();
+  // 刷新预览
+  const previewFeatures = tempArrowSource.getFeatures();
+  if (previewFeatures.length > 0) {
+    const features = previewFeatures.slice();
+    tempArrowSource.clear();
+    tempArrowSource.addFeatures(features);
+  }
+}
+
+// 绑定UI事件
+const drawBtn = document.getElementById('drawBtn');
+const clearBtn = document.getElementById('clearBtn');
+const sampleBtn = document.getElementById('sampleBtn');
+const sizeSlider = document.getElementById('arrowSize');
+const angleSlider = document.getElementById('arrowAngle');
+const lineWidthSlider = document.getElementById('lineWidth');
+const colorPicker = document.getElementById('arrowColor');
+const statusDiv = document.getElementById('status');
+
+if (drawBtn) {
+  drawBtn.onclick = () => {
+    if (isDrawingMode && drawInteraction) {
+      map.removeInteraction(drawInteraction);
+    }
+    createDrawInteraction();
+    isDrawingMode = true;
+    if (statusDiv) statusDiv.innerHTML = '✏️ 绘制模式已开启 | 点击地图确定点，双击完成';
+  };
+}
+
+if (clearBtn) clearBtn.onclick = clearAllLines;
+if (sampleBtn) sampleBtn.onclick = addSampleLine;
+
+if (sizeSlider) {
+  const sizeVal = document.getElementById('sizeVal');
+  sizeSlider.oninput = (e) => {
+    arrowConfig.size = parseInt(e.target.value);
+    if (sizeVal) sizeVal.innerText = arrowConfig.size;
+    refreshArrowStyle();
+  };
+}
+
+if (angleSlider) {
+  const angleVal = document.getElementById('angleVal');
+  angleSlider.oninput = (e) => {
+    arrowConfig.angle = parseInt(e.target.value);
+    if (angleVal) angleVal.innerText = arrowConfig.angle;
+    refreshArrowStyle();
+  };
+}
+
+if (lineWidthSlider) {
+  const lineWidthVal = document.getElementById('lineWidthVal');
+  lineWidthSlider.oninput = (e) => {
+    arrowConfig.strokeWidth = parseFloat(e.target.value);
+    if (lineWidthVal) lineWidthVal.innerText = arrowConfig.strokeWidth;
+    refreshArrowStyle();
+  };
+}
+
+if (colorPicker) {
+  colorPicker.oninput = (e) => {
+    arrowConfig.color = e.target.value;
+    arrowConfig.strokeColor = e.target.value;
+    refreshArrowStyle();
+  };
+}
+
+// 自动启动
+setTimeout(() => {
+  createDrawInteraction();
+  isDrawingMode = true;
+  addSampleLine();
+  console.log('');
+  console.log('✅ 线段箭头功能已启动（简化版）');
+  console.log('💡 绘制时显示橙色预览箭头，完成后显示红色箭头');
+}, 500);
+
+window.addLine = (points) => {
+  const coords = points.map(p => ol.proj.fromLonLat(p));
+  const line = new ol.Feature({
+    geometry: new ol.geom.LineString(coords)
+  });
+  lineSource.addFeature(line);
+  lineLayer.changed();
+};
+
+window.clearAllLines = clearAllLines;
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-scale-line {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.custome-scale-line-inner {
+  margin: 1px;
+  border: 1px solid #eee;
+  border-top: none;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
+
+/*=============================*/
+
+
+.controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+
+button {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #f0f0f0;
+}
+
+.config-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  background: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 12px;
+  min-width: 180px;
+}
+
+.config-panel h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.config-panel input {
+  margin: 5px 0;
+}
+
+.config-panel .color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.config-panel .color-row span {
+  width: 40px;
+}
+
+.status {
+  position: absolute;
+  top: 40px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>

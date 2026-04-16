@@ -1,0 +1,501 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/4/16 17:26:29
+页面标题: OpenLayers 要素拾取示例
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 要素拾取示例</title>
+<meta name="description" content="本例介绍了 OpenLayers 中要素拾取。通过 map.forEachFeatureAtPixel 实现拾取矢量图层要素的操作" />
+<template>
+<div id="map"></div>
+<div class="custome-scale-line" id="custome-scale-line"></div>
+
+<!-- 信息面板 - 完全独立于地图 -->
+<div class="info-panel" id="infoPanel">
+  <h3>📍 拾取结果</h3>
+  <div class="content" id="infoContent">
+    <p>点击地图上的要素查看详情</p>
+  </div>
+</div>
+
+<div class="status" id="status">
+  ✅ 地图已加载 | 可拾取图层：点图层 + 线/面图层
+</div>
+
+<div class="hint">
+  💡 提示：点击橙色圆点、蓝色线条或蓝色区域查看要素信息
+</div>
+</template>
+<script>
+ console.log(ol)
+
+ // 创建比例尺控件
+ const scaleLineControl = new ol.control.ScaleLine({
+   units: 'metric', // 'degrees-度', 'imperial-英制单位', 'nautical-海里', 'metric-米', 'us',默认值'metric'
+   className: 'custome-scale-line', // 自定义css类样式名
+   // minWidth: 200,// 最小宽度
+   target: document.querySelector("#custome-scale-line"), // 放置比例尺控件的目标容器
+ })
+
+ const map = new ol.Map({
+   target: 'map',
+   loadTilesWhileInteracting: true,
+   view: new ol.View({
+     center: [11421771, 4288300],
+     zoom: 5,
+     worldsWrap: true,
+     minZoom: 1,
+     maxZoom: 20,
+     projection: 'EPSG:3857',
+   }),
+   // 鼠标控件：鼠标在地图上移动时显示坐标信息。
+   controls: ol.control.defaults.defaults().extend([
+     // 加载鼠标控件
+     new ol.control.MousePosition(),
+
+     // 加载比例尺控件
+     // scaleLineControl
+   ]),
+ })
+ // 后加载比例尺控件
+ map.addControl(scaleLineControl)
+
+ const gaodeLayer = new ol.layer.Tile({
+   source: new ol.source.XYZ({
+     title: '高德',
+     url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+   }),
+ })
+ map.addLayer(gaodeLayer)
+
+ // ==============在此之前 ，我们已经初始化了 map ===============
+
+
+
+
+
+ // 调试：检查面板元素
+ const panel = document.getElementById('infoPanel');
+ const content = document.getElementById('infoContent');
+ const statusDiv = document.getElementById('status');
+
+ console.log('=== 初始化检查 ===');
+ console.log('面板元素:', panel);
+ console.log('面板样式:', window.getComputedStyle(panel));
+ console.log('面板位置:', panel.getBoundingClientRect());
+
+ statusDiv.innerHTML = '✅ 地图加载中...';
+
+ // --- 初始化地图 ---
+ const rasterLayer = new ol.layer.Tile({
+   source: new ol.source.OSM(),
+ });
+
+ // 可拾取点图层
+ const pickablePointLayer = new ol.layer.Vector({
+   source: new ol.source.Vector(),
+   style: new ol.style.Style({
+     image: new ol.style.Circle({
+       radius: 8,
+       fill: new ol.style.Fill({
+         color: '#ff5722'
+       }),
+       stroke: new ol.style.Stroke({
+         color: '#fff',
+         width: 2
+       })
+     })
+   }),
+   properties: {
+     name: '点图层'
+   }
+ });
+
+ // 可拾取线面图层
+ const pickableLinePolyLayer = new ol.layer.Vector({
+   source: new ol.source.Vector(),
+   style: new ol.style.Style({
+     stroke: new ol.style.Stroke({
+       color: '#2196f3',
+       width: 3
+     }),
+     fill: new ol.style.Fill({
+       color: 'rgba(33, 150, 243, 0.3)'
+     })
+   }),
+   properties: {
+     name: '线面图层'
+   }
+ });
+
+ // 不可拾取图层
+ const nonPickableLayer = new ol.layer.Vector({
+   source: new ol.source.Vector(),
+   style: new ol.style.Style({
+     image: new ol.style.Circle({
+       radius: 6,
+       fill: new ol.style.Fill({
+         color: '#9e9e9e'
+       }),
+       stroke: new ol.style.Stroke({
+         color: '#fff',
+         width: 2
+       })
+     }),
+     stroke: new ol.style.Stroke({
+       color: '#9e9e9e',
+       width: 2
+     }),
+     fill: new ol.style.Fill({
+       color: 'rgba(158, 158, 158, 0.3)'
+     })
+   }),
+   properties: {
+     name: '不可拾取图层'
+   }
+ });
+
+ // 添加测试要素
+ const pointFeatures = [{
+     id: 101,
+     name: '北京',
+     coord: [116.4074, 39.9042],
+     type: '首都'
+   },
+   {
+     id: 102,
+     name: '上海',
+     coord: [121.4737, 31.2304],
+     type: '直辖市'
+   },
+   {
+     id: 103,
+     name: '广州',
+     coord: [113.2644, 23.1291],
+     type: '省会'
+   }
+ ];
+
+ pointFeatures.forEach(item => {
+   const feature = new ol.Feature({
+     geometry: new ol.geom.Point(ol.proj.fromLonLat(item.coord)),
+     id: item.id,
+     name: item.name,
+     type: item.type
+   });
+   feature.setId(item.id);
+   pickablePointLayer.getSource().addFeature(feature);
+ });
+
+ // 线要素
+ const lineFeature = new ol.Feature({
+   geometry: new ol.geom.LineString([
+     ol.proj.fromLonLat([116.30, 39.85]),
+     ol.proj.fromLonLat([116.45, 39.95]),
+     ol.proj.fromLonLat([116.55, 39.90])
+   ]),
+   id: 201,
+   name: '长安街延长线',
+   type: '道路'
+ });
+ lineFeature.setId(201);
+ pickableLinePolyLayer.getSource().addFeature(lineFeature);
+
+ // 面要素
+ const polygonFeature = new ol.Feature({
+   geometry: new ol.geom.Polygon([
+     [
+       ol.proj.fromLonLat([116.35, 39.88]),
+       ol.proj.fromLonLat([116.42, 39.88]),
+       ol.proj.fromLonLat([116.42, 39.93]),
+       ol.proj.fromLonLat([116.35, 39.93]),
+       ol.proj.fromLonLat([116.35, 39.88])
+     ]
+   ]),
+   id: 202,
+   name: '天安门周边区域',
+   type: '景区'
+ });
+ polygonFeature.setId(202);
+ pickableLinePolyLayer.getSource().addFeature(polygonFeature);
+
+ // 不可拾取的测试要素
+ const nonPickFeature = new ol.Feature({
+   geometry: new ol.geom.Point(ol.proj.fromLonLat([116.50, 39.75])),
+   id: 999,
+   name: '不可拾取的点'
+ });
+ nonPickFeature.setId(999);
+ nonPickableLayer.getSource().addFeature(nonPickFeature);
+
+ // --- 添加图层 ---
+ map.addLayer(pickablePointLayer);
+ map.addLayer(pickableLinePolyLayer);
+ map.addLayer(nonPickableLayer);
+
+ // 定义可拾取图层
+ const pickableLayers = [pickablePointLayer, pickableLinePolyLayer];
+
+ // 更新面板内容的函数（不替换整个面板）
+ function updateInfoPanel(feature, layer) {
+   const panel = document.getElementById('infoPanel');
+   const content = document.getElementById('infoContent');
+
+   if (!feature) {
+     // 不清空整个面板，只更新内容
+     if (content) {
+       content.innerHTML = '点击地图上的要素查看详情';
+     }
+     return;
+   }
+
+   const featureId = feature.getId();
+   const properties = feature.getProperties();
+
+   // 构建显示内容
+   let html = `<strong>📁 图层:</strong> ${layer.get('name')}<br>`;
+   html += `<strong>🆔 要素ID:</strong> ${featureId}<br>`;
+
+   for (let key in properties) {
+     if (key !== 'geometry' && !(properties[key] instanceof ol.geom.Geometry)) {
+       html += `<strong>${key}:</strong> ${properties[key]}<br>`;
+     }
+   }
+
+   if (content) {
+     content.innerHTML = html;
+   }
+
+   // 同时在控制台输出
+   console.log('拾取成功:', {
+     图层: layer.get('name'),
+     要素ID: featureId,
+     属性: properties
+   });
+ }
+
+ // 鼠标点击事件
+ map.on('singleclick', function(evt) {
+   let pickedFeature = null;
+   let pickedLayer = null;
+
+   map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+     pickedFeature = feature;
+     pickedLayer = layer;
+     return true;
+   }, {
+     layerFilter: function(layer) {
+       return pickableLayers.includes(layer);
+     }
+   });
+
+   if (pickedFeature && pickedLayer) {
+     updateInfoPanel(pickedFeature, pickedLayer);
+     statusDiv.innerHTML = `✅ 拾取成功: ${pickedFeature.get('name')} (${new Date().toLocaleTimeString()})`;
+
+     // 高亮效果
+     pickedFeature.setStyle(new ol.style.Style({
+       stroke: new ol.style.Stroke({
+         color: '#ff0000',
+         width: 4
+       }),
+       fill: new ol.style.Fill({
+         color: 'rgba(255, 0, 0, 0.3)'
+       }),
+       image: new ol.style.Circle({
+         radius: 12,
+         fill: new ol.style.Fill({
+           color: '#ff0000'
+         }),
+         stroke: new ol.style.Stroke({
+           color: '#fff',
+           width: 2
+         })
+       })
+     }));
+
+     setTimeout(() => {
+       pickedFeature.setStyle(undefined);
+     }, 300);
+   } else {
+     updateInfoPanel(null);
+     statusDiv.innerHTML = `❌ 未拾取到要素 (${new Date().toLocaleTimeString()})`;
+     console.log('未拾取到要素');
+   }
+ });
+
+ // 鼠标移动改变光标
+ map.on('pointermove', function(evt) {
+   const hasFeature = map.hasFeatureAtPixel(evt.pixel, {
+     layerFilter: function(layer) {
+       return pickableLayers.includes(layer);
+     }
+   });
+   map.getTargetElement().style.cursor = hasFeature ? 'pointer' : 'default';
+ });
+
+ // 地图加载完成后再次检查面板
+ map.on('loadend', function() {
+   setTimeout(() => {
+     console.log('=== 地图加载完成，再次检查面板 ===');
+     const panel = document.getElementById('infoPanel');
+     const rect = panel.getBoundingClientRect();
+     console.log('面板位置:', rect);
+     console.log('面板 z-index:', window.getComputedStyle(panel).zIndex);
+     console.log('面板背景色:', window.getComputedStyle(panel).backgroundColor);
+     statusDiv.innerHTML = '✅ 地图已加载，点击橙色点或蓝色线面试试';
+   }, 500);
+ });
+
+ // 定期检查面板是否可见
+ setInterval(() => {
+   const panel = document.getElementById('infoPanel');
+   const rect = panel.getBoundingClientRect();
+   if (rect.top === 0 && rect.left === 0) {
+     console.warn('警告：面板位置异常！');
+   }
+ }, 3000);
+
+ console.log('地图初始化完成');
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-scale-line {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.custome-scale-line-inner {
+  margin: 1px;
+  border: 1px solid #eee;
+  border-top: none;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
+
+
+
+/* 信息面板 - 独立于地图容器之外，使用 fixed 定位 */
+.info-panel {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  background: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 12px;
+  min-width: 180px;
+}
+
+.info-panel h3 {
+  margin: 0 0 10px 0 !important;
+  font-size: 16px !important;
+  color: #333 !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid #eee !important;
+  padding-bottom: 5px !important;
+}
+
+.info-panel .content {
+  margin: 0 !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  line-height: 1.6 !important;
+}
+
+.info-panel .content p {
+  margin: 8px 0 !important;
+}
+
+.info-panel .feature-id {
+  color: #2196f3 !important;
+  font-weight: bold !important;
+}
+
+.info-panel .layer-name {
+  color: #4caf50 !important;
+  font-weight: bold !important;
+}
+
+/* 状态栏 */
+.status {
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 20px !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #fff !important;
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  z-index: 999999 !important;
+  font-family: monospace !important;
+  pointer-events: none !important;
+}
+
+/* 提示信息 */
+.hint {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: #ff9800 !important;
+  padding: 4px 12px !important;
+  border-radius: 16px !important;
+  font-size: 11px !important;
+  z-index: 999999 !important;
+  pointer-events: none !important;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
