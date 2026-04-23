@@ -1,0 +1,219 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/4/22 11:21:29
+页面标题: OpenLayers 隐藏显示矢量图层内要素
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>openlayers</engine-type>
+<title>OpenLayers 隐藏显示矢量图层内要素</title>
+<meta name="description" content="采用设置要素style的方式实现要素的显示隐藏。" />
+<template>
+<div id="map"></div>
+<div class="custome-scale-line" id="custome-scale-line"></div>
+
+<div class="controls">
+  <button id="toggleBtn">隐藏/显示要素</button>
+</div>
+</template>
+<script>
+console.log(ol)
+
+// 创建比例尺控件
+const scaleLineControl = new ol.control.ScaleLine({
+  units: 'metric',
+  className: 'custome-scale-line',
+  target: document.querySelector("#custome-scale-line"),
+})
+
+const map = new ol.Map({
+  target: 'map',
+  loadTilesWhileInteracting: true,
+  view: new ol.View({
+    center: [116.390, 39.900],
+    zoom: 5,
+    worldsWrap: true,
+    minZoom: 1,
+    maxZoom: 20,
+    projection: 'EPSG:4326',
+  }),
+  controls: ol.control.defaults.defaults().extend([
+    new ol.control.MousePosition(),
+  ]),
+})
+map.addControl(scaleLineControl)
+
+const gaodeLayer = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    title: '高德',
+    url: 'http://wprd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&style=7&x={x}&y={y}&z={z}',
+  }),
+})
+map.addLayer(gaodeLayer)
+
+const dragRotate = new ol.interaction.DragRotate({
+  condition: ol.events.condition.platformModifierKeyOnly,
+  duration: 250,
+});
+map.addInteraction(dragRotate);
+
+// =============================
+// 多边形要素
+// 定义多边形坐标（北京城区范围示例）
+const polygonCoords = [
+  [
+    [116.20, 39.80],
+    [116.50, 39.80],
+    [116.50, 40.00],
+    [116.20, 40.00],
+    [116.20, 39.80]
+  ]
+];
+
+// 创建多边形要素
+const feature = new ol.Feature({
+  geometry: new ol.geom.Polygon(polygonCoords),
+  name: '北京城区'
+});
+
+const source = new ol.source.Vector({
+  features: [feature]
+});
+
+const layer = new ol.layer.Vector({
+  source: source,
+  style: new ol.style.Style({
+    fill: new ol.style.Fill({
+      color: 'rgba(255, 255, 0, 0.3)' // 半透明绿色填充
+    }),
+    stroke: new ol.style.Stroke({
+      color: 'green',
+      width: 2
+    })
+  })
+});
+
+map.addLayer(layer)
+
+function fitToFeatures() {
+  const ext = source.getExtent();
+  if (ol.extent.isEmpty(ext)) return;
+  map.getView().fit(ext, {
+    padding: [50, 50, 50, 50],
+    duration: 300
+  });
+}
+
+setTimeout(fitToFeatures, 100);
+
+let hidden = false;
+document.getElementById('toggleBtn').onclick = () => {
+  if (hidden) {
+    const oldStyle = feature.get('oldStyle');
+    feature.setStyle(oldStyle);
+    feature.unset('oldStyle'); // 恢复原样式
+  } else {
+    const style = feature.getStyle();
+    feature.set('oldStyle', style); // 备份旧样式
+    feature.setStyle(new ol.style.Style({})); // 隐藏：空样式
+  }
+  hidden = !hidden;
+};
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: '微软雅黑';
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ol-zoom {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  top: auto;
+  left: auto;
+}
+
+#custome-scale-line {
+  position: absolute;
+  right: 24px;
+  bottom: 16px;
+  width: 200px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.custome-scale-line-inner {
+  margin: 1px;
+  border: 1px solid #eee;
+  border-top: none;
+  color: #eee;
+  font-size: 10px;
+  text-align: center;
+  background: #060505ba;
+  will-change: contents, width;
+}
+
+/*=============================*/
+
+
+
+
+/* 控制面板 */
+.controls {
+  position: absolute;
+  top: 40px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+button:hover {
+  background: #f0f0f0;
+}
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
